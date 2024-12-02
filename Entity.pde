@@ -41,6 +41,10 @@ public class WorldObject implements Updateable {
   public PVector scale = one;
   public PVector localScale = one.copy();
 
+  // local direction vectors (for rotation)
+  public PVector forward = WORLD_FORWARD.copy(), right = WORLD_RIGHT.copy(), up = WORLD_UP.copy();
+
+
   public WorldObject(PVector p, Quaternion rot, PVector sc, boolean addToEntityList) {
     localPosition = p.copy();
     localRotation = rot.getCopy();
@@ -158,6 +162,11 @@ public class WorldObject implements Updateable {
     for (WorldObject c : children) {
       c.onTransformUpdate();
     }
+
+    // recalculate forward, right, and up
+    forward = rotateVector(WORLD_FORWARD, rotation);
+    right = rotateVector(WORLD_RIGHT, rotation);
+    up = rotateVector(WORLD_UP, rotation);
   }
 
 
@@ -205,10 +214,6 @@ public class RenderObject extends WorldObject {
 
   // shape template - kept only because it's necessary to make a copy of this entity
   public ShapeTemplate shapeTemplate;
-
-  // local direction vectors (for rotation)
-  public PVector forward = WORLD_FORWARD.copy(), right = WORLD_RIGHT.copy(), up = WORLD_UP.copy();
-
 
   // for enemies, shots, and the player, their hitbox is spherical, and its radius is defined here
   public float hitSphereRadius = 0.5;
@@ -281,11 +286,6 @@ public class RenderObject extends WorldObject {
     protected void onTransformUpdate() {
 
     super.onTransformUpdate();
-
-    // recalculate forward, right, and up
-    forward = rotateVector(WORLD_FORWARD, rotation);
-    right = rotateVector(WORLD_RIGHT, rotation);
-    up = rotateVector(WORLD_UP, rotation);
 
 
     updateShapes();

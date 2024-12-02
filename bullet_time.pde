@@ -57,9 +57,13 @@ public Entity player;
 GatedArrayList<Updateable> updateables, p3dObjects;
 
 RenderObject testCube;
+boolean testView = false;
 
 
 PShape pCube;
+
+// testing:
+boolean qHeld, wHeld, eHeld, rHeld, aHeld, sHeld, dHeld, fHeld;
 
 void setup() {
   size(860, 860, P3D);
@@ -79,16 +83,16 @@ void setup() {
 
   overlayCamera = new Camera(zero, identity, one, camFOV, false);
 
-  setupController();
+  //setupController();
 
   // shape test
   pCube = loadShape("test_cube.obj");
   pCube.scale(wire_to_real_units);
   testCube = new RenderObject(new PVector(0, 0, 0), identity, one, cube, true);
+
+
   //testCube.rotateBy(WORLD_FORWARD, 45);
   //mainCamera.rotateBy(WORLD_FORWARD, 45);
-
-  println("pcube: " + pCube);
 }
 
 float scale_units = 50;
@@ -104,34 +108,42 @@ void draw() {
 
 
   // poll controller
-  checkControllerInput();
+  //checkControllerInput();
 
 
   // init P3D camera
   //camera(mainCamera.position.x, mainCamera.position.y, -mainCamera.position.z, width/2, height/2, 0, 0, 1, 0);
 
+  //  println("cam eye positioN: " + new PVector(cX, cY, cZ));
+  //camera(cX, cY, cZ, width/2, height/2, 0, 0, 1, 0);
+  if (!testView) camera(mainCamera.position.x * wire_to_real_units, mainCamera.position.y * wire_to_real_units, mainCamera.position.z * wire_to_real_units, 0, 0, 0, 0, 1, 0);
+
   // cube test
   pushMatrix();
 
-  translate(width/2, height/2, 0);
+  if (testView) translate(width/2, height/2);
   //translate(testCube.position.x * wire_to_real_units, -testCube.position.y * wire_to_real_units, testCube.position.z * wire_to_real_units);
   //translate(-mainCamera.position.x * wire_to_real_units, -mainCamera.position.y * wire_to_real_units, (mainCamera.position.z + 10) * wire_to_real_units);
   perspective(camFOV, float(width)/float(height), 0.1, 10000);
 
-  Quaternion finalRot = testCube.rotation.getCopy().multiply(mainCamera.rotation);
+  Quaternion finalRot;
+  if (testView) {
+    finalRot = mainCamera.rotation.getCopy().multiply(testCube.rotation);
+  } else  finalRot = testCube.rotation;
 
-  PVector finalTranslation = vectorAdd(testCube.position, vectorScale(mainCamera.position, -1));
-  finalTranslation = rotatePointAround(finalTranslation, mainCamera.position, mainCamera.rotation);
+  PVector finalTranslation = testCube.position;
 
-  translate(finalTranslation.x * wire_to_real_units, -finalTranslation.y * wire_to_real_units, (-finalTranslation.z + 10) * wire_to_real_units);
-   float[] m = new float[16];
+  float[] m = new float[16];
   finalRot.toMatrix(m);
   applyMatrix(m[0], m[1], m[2], m[3],
     m[4], m[5], m[6], m[7],
     m[8], m[9], m[10], m[11],
     m[12], m[13], m[14], m[15]);
 
+  translate(finalTranslation.x * wire_to_real_units, -finalTranslation.y * wire_to_real_units, (-finalTranslation.z) * wire_to_real_units);
 
+
+  //println("testcube projected on wire camera: " + projectPoint(testCube.position, mainCamera));
   //float[] m = new float[16];
   //mainCamera.rotation.toMatrix(m);
   //applyMatrix(m[0], m[1], m[2], m[3],
@@ -146,19 +158,98 @@ void draw() {
 
   updateUpdateables();
 
+  //if (testView) {
+    if (qHeld) {
+      camParent.rotateByLocal(WORLD_UP, 30 * deltaTime);
+      //cX += deltaTime * 50;
+    }
+    if (wHeld) {
+      camParent.rotateByLocal(WORLD_UP, -30 * deltaTime);
+      //cX -= deltaTime * 50;
+    }
+  //}
 
-  if (keyPressed) {
-    //parent.rotateBy(WORLD_FORWARD, 30 * deltaTime);
-    //testCube.rotateBy(WORLD_FORWARD, 30 * deltaTime);
-        testCube.movePosition(vectorScale(WORLD_LEFT, 5 * deltaTime));
-
+  if (eHeld) {
+    //camParent.rotateByLocal(WORLD_RIGHT, 30 * deltaTime);
+    //mainCamera.movePosition(new PVector(0, 0, deltaTime * 5));
+    //cY += deltaTime * 50;
+  }
+  if (rHeld) {
+    //camParent.rotateByLocal(WORLD_RIGHT, -30 * deltaTime);
+    //mainCamera.movePosition(new PVector(0, 0, deltaTime * -5));
+    //cY -= deltaTime * 50;
   }
 
-  if (mousePressed) {
-    //parent.movePosition(vectorScale(WORLD_FORWARD, 5 * deltaTime));
-    //tZ += 1;
-    //mainCamera.movePosition(vectorScale(WORLD_FORWARD, 5 * deltaTime));
+  if (aHeld) {
+    //camParent.rotateBy(WORLD_FORWARD, 30 * deltaTime);
+    //cZ += deltaTime * 50;
+  }
+  if (sHeld) {
+    //camParent.rotateBy(WORLD_FORWARD, -30 * deltaTime);
+    //cZ -= deltaTime * 50;
+  }
+
+  if (dHeld) {
+    //testCube.rotateBy(WORLD_UP, 30 * deltaTime);
     testCube.movePosition(vectorScale(WORLD_RIGHT, 5 * deltaTime));
+  }
+  if (fHeld) {
+    //testCube.rotateBy(WORLD_UP, -30 * deltaTime);
+    testCube.movePosition(vectorScale(WORLD_RIGHT, -5 * deltaTime));
+  }
+}
+
+void keyPressed() {
+  if (key == 'q') {
+    qHeld = true;
+  }
+  if (key == 'w') {
+    wHeld = true;
+  }
+  if (key == 'e') {
+    eHeld = true;
+  }
+  if (key == 'r') {
+    rHeld = true;
+  }
+  if (key == 'a') {
+    aHeld = true;
+  }
+  if (key == 's') {
+    sHeld = true;
+  }
+  if (key == 'd') {
+    dHeld = true;
+  }
+  if (key == 'f') {
+    fHeld = true;
+  }
+}
+
+void keyReleased() {
+  if (key == 'q') {
+    qHeld = false;
+  }
+  if (key == 'w') {
+    wHeld = false;
+  }
+  if (key == 'e') {
+    eHeld = false;
+  }
+  if (key == 'r') {
+    rHeld = false;
+  }
+  if (key == 'a') {
+    aHeld = false;
+  }
+  if (key == 's') {
+    sHeld = false;
+  }
+  if (key == 'd') {
+    dHeld = false;
+  }
+  if (key == 'f') {
+    fHeld = false;
   }
 }
 
