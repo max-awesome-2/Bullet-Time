@@ -48,81 +48,71 @@ public float camFOV = 1.0 / tan(90 * DEG2RAD / 2.0);
 // the camera itself
 public Camera mainCamera, overlayCamera;
 
+// object to which the main camera is parented
+public WorldObject camParent;
+
 public Entity player;
 
 // list of updateables that will be iterated over each iteration of the game loop
 GatedArrayList<Updateable> updateables, p3dObjects;
 
-// test
-RenderObject parent;
+RenderObject testCube;
 
-// test
-RenderObject hand;
+
+PShape pCube;
 
 void setup() {
-  size(860, 860);
-
-  // initialize millis value
-  lastMillis = millis();
-
-  // initialize the main camera
-  mainCamera = new Camera(new PVector(0, 0, -20), identity, one, camFOV, true);
-  overlayCamera = new Camera(zero, identity, one, camFOV, false);
-  // TODO: initialize player, parent camera to player
-
+  size(860, 860, P3D);
 
   // initialize updateables list
   updateables = new GatedArrayList<Updateable>();
 
-  // parenting test
-  parent = new RenderObject(zero, identity, one, cube, true);
-  RenderObject child1 = new RenderObject(new PVector(8, 0, 0), identity, one, cube, true);
-  RenderObject child2 = new RenderObject(new PVector(8, 0, 0), identity, one, cube, true);
-  child1.setParent(parent);
-  child2.setParent(child1);
-  
-  parent.rotateBy(WORLD_FORWARD, 45);
-  
-  // initialize hand
-  WorldObject handParent = new WorldObject(new PVector(1, 0, 1), identity, one, true);
-  hand = new RenderObject(new PVector(0, 0, 0), identity, vectorScale(one, 0.15), cube, true);
-  
-  hand.setParent(handParent);
-  handParent.setParent(mainCamera);
+  // initialize millis value
+  lastMillis = millis();
 
+  // initialize camera parent
+  camParent = new WorldObject(zero, identity, one, true);
+
+  // initialize the main camera
+  mainCamera = new Camera(new PVector(0, 0, -10), identity, one, camFOV, true);
+  mainCamera.setParent(camParent);
   
-  setupControllers();
+  overlayCamera = new Camera(zero, identity, one, camFOV, false);
+    
+  //setupController();
+  
+  // shape test
+  pCube = loadShape("test_cube.obj");
+  testCube = new RenderObject(zero, identity, one, cube, true); 
+  println("pcube: " + pCube);
 
 }
 
 void draw() {
 
-  background(0);
+  background(50);
 
   // calculate delta time & increment time
   updateTime();
 
   updateUpdateables();
   
-  checkControllerInput();
+  // poll controller
+  //checkControllerInput();
+  
+  // cube test
+  pushMatrix();
+  translate(0, 0, 10);
+  shape(pCube);
+  popMatrix();
 
-  // do camera shake
-  
-  //if (time < lastExplosionTime + cameraShakeTime) {
-  //  float shakeIntensityRatio = 1 - ((time - lastExplosionTime) / cameraShakeTime);
-  //  float shakeIntensity = cameraShakeMaxIntensity * shakeIntensityRatio;
-  //  PVector randomShakeOffset = vectorScale(new PVector(random(-1, 1), random(-1, 1), random(-1, 1)).normalize(), shakeIntensity);
-  //  mainCamera.setPosition(randomShakeOffset);
-  //} else {
-  //  mainCamera.setPosition(zero);
-  //}
-  
   if (keyPressed) {
-    parent.rotateBy(WORLD_FORWARD, 30 * deltaTime);
+    //parent.rotateBy(WORLD_FORWARD, 30 * deltaTime);
+    camParent.rotateBy(WORLD_UP, 30 * deltaTime);
   }
   
   if (mousePressed) {
-     parent.movePosition(vectorScale(WORLD_FORWARD, 5 * deltaTime));
+     //parent.movePosition(vectorScale(WORLD_FORWARD, 5 * deltaTime));
   }
 }
 
@@ -144,7 +134,4 @@ void updateUpdateables() {
   for (Updateable u : updateables) {
     u.update();
   }
-  
-  // poll controllers
-  checkControllerInput();
 }
