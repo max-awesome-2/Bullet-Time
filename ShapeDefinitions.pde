@@ -762,14 +762,14 @@ ShapeTemplate line = new ShapeTemplate(
 ShapeTemplate cube = new ShapeTemplate(
 
   new PVector[] {
-  new PVector(-1, -1, -1),
-  new PVector(1, -1, -1),
-  new PVector(1, 1, -1),
-  new PVector(-1, 1, -1),
-  new PVector(-1, -1, 1),
-  new PVector(1, -1, 1),
-  new PVector(1, 1, 1),
-  new PVector(-1, 1, 1)
+  new PVector(-0.5, -0.5, -0.5),
+  new PVector(0.5, -0.5, -0.5),
+  new PVector(0.5, 0.5, -0.5),
+  new PVector(-0.5, 0.5, -0.5),
+  new PVector(-0.5, -0.5, 0.5),
+  new PVector(0.5, -0.5, 0.5),
+  new PVector(0.5, 0.5, 0.5),
+  new PVector(-0.5, 0.5, 0.5)
   },
 
   new int[] {
