@@ -1,0 +1,3 @@
+interface LambdaEmpty {
+ void run(); 
+}
