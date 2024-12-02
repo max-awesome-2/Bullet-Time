@@ -18,7 +18,7 @@ public PVector projectPoint(PVector point, Camera c) {
   point = rotatePointAround(point, zero, mainCamera.rotation.getConjugate());
 
   // modify the point with camera FOV
-  return new PVector(point.x * camFOV / point.z, point.y * camFOV / point.z);
+  return new PVector(point.x * (camFOV * width / height) / point.z, point.y * camFOV / point.z);
 }
 
 /**

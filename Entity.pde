@@ -62,15 +62,19 @@ public class WorldObject implements Updateable {
   }
 
   public void setPosition(PVector newPos) {
-    localPosition = newPos;
+    localPosition = newPos.copy();
 
     onTransformUpdate();
   }
 
+  public void setRotation(Quaternion q) {
+    localRotation = q.getCopy();
 
+    onTransformUpdate();
+  }
 
   public void setScale(PVector newScale) {
-    localScale = newScale;
+    localScale = newScale.copy();
     onTransformUpdate();
   }
 
@@ -379,9 +383,9 @@ public class Entity extends RenderObject {
 
         float randomAlpha = random(255 - minAlphaMagOffset, 255);
 
-       
+
         stroke(255, 255, 255, randomAlpha);
-        
+
 
         drawLine(s.cameraVertices[s.template.lines[i]], s.cameraVertices[s.template.lines[i + 1]]);
       }
@@ -410,21 +414,20 @@ public class Entity extends RenderObject {
   }
 
   @Override
-  public void update() {
+    public void update() {
 
     // perform entity behaviour
     entityBehaviour();
-    
+
     // render this object each frame using the main camera
     render(mainCamera);
   }
-  
+
   /**
-    Performs this entity's unique behaviour.
-    Will be overridden in subclasses.
-  */
+   Performs this entity's unique behaviour.
+   Will be overridden in subclasses.
+   */
   public void entityBehaviour() {
-    
   }
 
   /**
@@ -437,7 +440,7 @@ public class Entity extends RenderObject {
 
     return e;
   }
-  
+
   /**
    Checks & handles collisions between this entity and other entities.
    The only important checks that will occur are:
@@ -450,20 +453,19 @@ public class Entity extends RenderObject {
 
     // if we're the player, only check collisions with enemies and enemy shots
     if (entityType == 0) {
-    //  if (other.entityType == 2 || other.entityType == 1) {
+      //  if (other.entityType == 2 || other.entityType == 1) {
 
-    //    // since we're only checking spherical hitboxes, a hit is registered when the distance between the two entities is smaller
-    //    // than or equal to the sum of their hitsphere radii
-    //    float d = dist(position.x, position.y, position.z, other.position.x, other.position.y, other.position.z);
-    //    float hsModified = hitSphereRadius * scale.x;
-    //    float otherHSModified = other.hitSphereRadius * other.scale.x;
+      //    // since we're only checking spherical hitboxes, a hit is registered when the distance between the two entities is smaller
+      //    // than or equal to the sum of their hitsphere radii
+      //    float d = dist(position.x, position.y, position.z, other.position.x, other.position.y, other.position.z);
+      //    float hsModified = hitSphereRadius * scale.x;
+      //    float otherHSModified = other.hitSphereRadius * other.scale.x;
 
-    //    if (d < hsModified + otherHSModified) {
-    //      takeDamage(1);
-    //    }
-    //  }
-    }
-    else if (entityType == 2) {
+      //    if (d < hsModified + otherHSModified) {
+      //      takeDamage(1);
+      //    }
+      //  }
+    } else if (entityType == 2) {
 
       // TODO: check collision w/ magic missiles and such things
     }

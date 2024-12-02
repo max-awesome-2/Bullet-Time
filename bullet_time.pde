@@ -76,43 +76,89 @@ void setup() {
   // initialize the main camera
   mainCamera = new Camera(new PVector(0, 0, -10), identity, one, camFOV, true);
   mainCamera.setParent(camParent);
-  
+
   overlayCamera = new Camera(zero, identity, one, camFOV, false);
-    
-  //setupController();
-  
+
+  setupController();
+
   // shape test
   pCube = loadShape("test_cube.obj");
-  testCube = new RenderObject(zero, identity, one, cube, true); 
-  println("pcube: " + pCube);
+  pCube.scale(wire_to_real_units);
+  testCube = new RenderObject(new PVector(0, 0, 0), identity, one, cube, true);
+  //testCube.rotateBy(WORLD_FORWARD, 45);
+  //mainCamera.rotateBy(WORLD_FORWARD, 45);
 
+  println("pcube: " + pCube);
 }
+
+float scale_units = 50;
+float wire_to_real_units = 50;
 
 void draw() {
 
   background(50);
+  lights();
 
   // calculate delta time & increment time
   updateTime();
 
-  updateUpdateables();
-  
+
   // poll controller
-  //checkControllerInput();
-  
+  checkControllerInput();
+
+
+  // init P3D camera
+  //camera(mainCamera.position.x, mainCamera.position.y, -mainCamera.position.z, width/2, height/2, 0, 0, 1, 0);
+
   // cube test
   pushMatrix();
-  translate(0, 0, 10);
+
+  translate(width/2, height/2, 0);
+  //translate(testCube.position.x * wire_to_real_units, -testCube.position.y * wire_to_real_units, testCube.position.z * wire_to_real_units);
+  //translate(-mainCamera.position.x * wire_to_real_units, -mainCamera.position.y * wire_to_real_units, (mainCamera.position.z + 10) * wire_to_real_units);
+  perspective(camFOV, float(width)/float(height), 0.1, 10000);
+
+  Quaternion finalRot = testCube.rotation.getCopy().multiply(mainCamera.rotation);
+
+  PVector finalTranslation = vectorAdd(testCube.position, vectorScale(mainCamera.position, -1));
+  finalTranslation = rotatePointAround(finalTranslation, mainCamera.position, mainCamera.rotation);
+
+  translate(finalTranslation.x * wire_to_real_units, -finalTranslation.y * wire_to_real_units, (-finalTranslation.z + 10) * wire_to_real_units);
+   float[] m = new float[16];
+  finalRot.toMatrix(m);
+  applyMatrix(m[0], m[1], m[2], m[3],
+    m[4], m[5], m[6], m[7],
+    m[8], m[9], m[10], m[11],
+    m[12], m[13], m[14], m[15]);
+
+
+  //float[] m = new float[16];
+  //mainCamera.rotation.toMatrix(m);
+  //applyMatrix(m[0], m[1], m[2], m[3],
+  //  m[4], m[5], m[6], m[7],
+  //  m[8], m[9], m[10], m[11],
+  //  m[12], m[13], m[14], m[15]);
+
+  //translate(mainCamera.position.x * wire_to_real_units, mainCamera.position.y * wire_to_real_units, -(mainCamera.position.z + 10) * wire_to_real_units);
+
   shape(pCube);
   popMatrix();
 
+  updateUpdateables();
+
+
   if (keyPressed) {
     //parent.rotateBy(WORLD_FORWARD, 30 * deltaTime);
-    camParent.rotateBy(WORLD_UP, 30 * deltaTime);
+    //testCube.rotateBy(WORLD_FORWARD, 30 * deltaTime);
+        testCube.movePosition(vectorScale(WORLD_LEFT, 5 * deltaTime));
+
   }
-  
+
   if (mousePressed) {
-     //parent.movePosition(vectorScale(WORLD_FORWARD, 5 * deltaTime));
+    //parent.movePosition(vectorScale(WORLD_FORWARD, 5 * deltaTime));
+    //tZ += 1;
+    //mainCamera.movePosition(vectorScale(WORLD_FORWARD, 5 * deltaTime));
+    testCube.movePosition(vectorScale(WORLD_RIGHT, 5 * deltaTime));
   }
 }
 
