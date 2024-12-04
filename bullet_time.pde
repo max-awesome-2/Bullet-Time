@@ -95,7 +95,8 @@ void setup() {
   // shape test
   //RenderObject testCube2 = new RenderObject(new PVector(0, 0, 0), identity, one, loadShape("test_cube.obj"), true);
   
-  println("A intersects: " + lineIntersectsSphere(new PVector(-5, -0.75, 0), new PVector(5, 0.-75, 0), 0, 0, 0, 1));
+  //println("A intersects: " + lineIntersectsSphere(new PVector(-5, -0.75, 0), new PVector(5, 0.-75, 0), 0, 0, 0, 1));
+  onRoundStart(10);
 
   //testCube.rotateBy(WORLD_FORWARD, 45);
   //mainCamera.rotateBy(WORLD_FORWARD, 45);
@@ -267,7 +268,7 @@ private void spawnBullet() {
     PVector direction = vectorSubtract(targetPos, spawnPos).normalize();
    
     // generate a line start and end point we can use the algorithm with
-    PVector lineStart = vectorScale(direction, -BULLET_SPAWN_DISTANCE), lineEnd = vectorScale(direction, BULLET_SPAWN_DISTANCE);
+    PVector lineStart = vectorAdd(targetPos, vectorScale(direction, -BULLET_SPAWN_DISTANCE)), lineEnd = vectorAdd(targetPos, vectorScale(direction, BULLET_SPAWN_DISTANCE));
 
     validTarget = !lineIntersectsSphere(lineStart, lineEnd, 0, 0, 0, BULLET_TARGET_MIN_DISTANCE);
   }
