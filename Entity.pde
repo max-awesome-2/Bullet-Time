@@ -148,8 +148,9 @@ public class WorldObject implements Updateable {
       // 2. world position = local position + parent world position
       // 3. world position = world position rotated by parent world rotation around parent world position
       // 4. world scale = local scale * parent world scale
+      // 5. world position = world position * parent world scale
       rotation = parent.rotation.getCopy().multiply(localRotation);
-      position = vectorAdd(localPosition, parent.position);
+      position = vectorAdd(vectorScaleByVector(localPosition, parent.scale), parent.position);
       position = rotatePointAround(position, parent.position, parent.rotation);
       scale = vectorScaleByVector(parent.scale, localScale);
     } else {

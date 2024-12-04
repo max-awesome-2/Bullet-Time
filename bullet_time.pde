@@ -90,7 +90,7 @@ void setup() {
   //setupController();
 
   // initialize player object & player hitboxes
-  player = new RenderObject(zero, identity, one, loadShape("guy.obj"), true);
+  player = new RenderObject(zero, identity, vectorScale(one, 0.5), loadShape("guy.obj"), true);
 
   float guyThickness = 0.55;
 
@@ -118,6 +118,15 @@ void setup() {
   b6.setParent(player);
   b7.setParent(player);
 
+  // initialize bullet object and hitboxes
+  RenderObject bullet = new RenderObject(zero, identity, one, loadShape("bullet.obj"), true);
+  BoundingPrism bb1 = new BoundingPrism(new PVector(0, -0.13094, 0), identity, new PVector(0.783,1.456, 0.783), false);
+  BoundingPrism bb2 = new BoundingPrism(new PVector(0, 0.75415, 0), identity, new PVector(0.635, 0.310, 0.635), false);
+  BoundingPrism bb3 = new BoundingPrism(new PVector(0, 1.0238, 0), identity, new PVector(0.429, 0.210, 0.429), false);
+  
+  bb1.setParent(bullet);
+  bb2.setParent(bullet);
+  bb3.setParent(bullet);
 
 
 
