@@ -16,6 +16,8 @@ float deltaTime;
 
 // last frame millis
 long lastMillis = millis();
+
+float timeScale = 1;
 ////////////////////////////////////////
 
 // constants
@@ -41,6 +43,15 @@ public PVector zero = new PVector(0, 0, 0),
 // the base quaternion, equivalent to an Euler rotation of (0, 0, 0)
 Quaternion identity = new Quaternion(0, zero);
 
+// game logic constants
+public float BULLET_SPEED = 10;
+public float BULLET_SPAWN_DISTANCE = 15;
+
+// bullets must target a position at least this far away from the center of the player
+public float BULLET_TARGET_MIN_DISTANCE = 0.5;
+// maximum targeting distance from player center
+public float BULLET_TARGET_MAX_DISTANCE = 1;
+
 ///// camera variables
 // the camera's field of view (90 degrees)
 public float camFOV = 1.0 / tan(90 * DEG2RAD / 2.0);
@@ -50,8 +61,6 @@ public Camera mainCamera, overlayCamera;
 
 // object to which the main camera is parented
 public WorldObject camParent;
-
-public Entity player;
 
 // list of updateables that will be iterated over each iteration of the game loop
 GatedArrayList<Updateable> updateables, p3dObjects;
@@ -84,7 +93,9 @@ void setup() {
   //setupController();
 
   // shape test
-  RenderObject testCube2 = new RenderObject(new PVector(0, 0, 0), identity, one, loadShape("test_cube.obj"), true);
+  //RenderObject testCube2 = new RenderObject(new PVector(0, 0, 0), identity, one, loadShape("test_cube.obj"), true);
+  
+  println("A intersects: " + lineIntersectsSphere(new PVector(-5, -0.75, 0), new PVector(5, 0.-75, 0), 0, 0, 0, 1));
 
   //testCube.rotateBy(WORLD_FORWARD, 45);
   //mainCamera.rotateBy(WORLD_FORWARD, 45);
@@ -117,14 +128,14 @@ void draw() {
   updateUpdateables();
 
   //if (testView) {
-    if (qHeld) {
-      camParent.rotateByLocal(WORLD_UP, 30 * deltaTime);
-      //cX += deltaTime * 50;
-    }
-    if (wHeld) {
-      camParent.rotateByLocal(WORLD_UP, -30 * deltaTime);
-      //cX -= deltaTime * 50;
-    }
+  if (qHeld) {
+    camParent.rotateByLocal(WORLD_UP, 30 * deltaTime);
+    //cX += deltaTime * 50;
+  }
+  if (wHeld) {
+    camParent.rotateByLocal(WORLD_UP, -30 * deltaTime);
+    //cX -= deltaTime * 50;
+  }
   //}
 
   if (eHeld) {
@@ -152,6 +163,7 @@ void draw() {
   }
   if (fHeld) {
     //testCube.rotateBy(WORLD_UP, -30 * deltaTime);
+    onRoundStart(1);
   }
 }
 
@@ -227,4 +239,38 @@ void updateUpdateables() {
   for (Updateable u : updateables) {
     u.update();
   }
+}
+
+private void onRoundStart(int roundNum) {
+
+  // spawn bullets equal to the round number
+  for (int i = 0; i < roundNum; i++) {
+    spawnBullet();
+  }
+}
+
+private void spawnBullet() {
+  // get a random point on the edge of the sphere
+  PVector randDirection = new PVector(random(1), random(1), random(1)).normalize();
+
+  PVector spawnPos = vectorScale(randDirection, BULLET_SPAWN_DISTANCE);
+
+  PVector targetPos = zero.copy();
+
+  // now pick a target, ensuring that the selected target doesn't make the bullet travel through
+  boolean validTarget = false;
+  while (!validTarget) {
+    println("AAAAAA");
+    randDirection = new PVector(random(1), random(1), random(1)).normalize();
+    targetPos = vectorScale(randDirection, random(BULLET_TARGET_MIN_DISTANCE, BULLET_TARGET_MAX_DISTANCE));
+
+    PVector direction = vectorSubtract(targetPos, spawnPos).normalize();
+   
+    // generate a line start and end point we can use the algorithm with
+    PVector lineStart = vectorScale(direction, -BULLET_SPAWN_DISTANCE), lineEnd = vectorScale(direction, BULLET_SPAWN_DISTANCE);
+
+    validTarget = !lineIntersectsSphere(lineStart, lineEnd, 0, 0, 0, BULLET_TARGET_MIN_DISTANCE);
+  }
+  
+  Bullet b = new Bullet(spawnPos, targetPos, one, true);
 }

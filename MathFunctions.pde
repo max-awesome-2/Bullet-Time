@@ -110,3 +110,90 @@ public PVector moveTowardsVector(PVector a, PVector b, float by) {
     moveTowards(a.z, b.z, by)
     );
 }
+
+/**
+ Implemented based on
+ https://math.stackexchange.com/questions/3140136/how-to-create-a-quaternion-rotation-from-a-forward-and-up-vector
+ and
+ https://stackoverflow.com/questions/52413464/look-at-quaternion-using-up-vector
+ */
+public Quaternion lookRotation(PVector forward, PVector up) {
+  PVector left = forward.cross(up);
+
+  float[][] m = new float[3][];
+  for (int i = 0; i < 3; i++) {
+    m[i] = new float[3];
+  }
+
+  m[0][0] = forward.x;
+  m[1][0] = forward.y;
+  m[2][0] = forward.z;
+  m[0][1] = left.x;
+  m[1][1] = left.y;
+  m[2][1] = left.z;
+  m[0][2] = up.x;
+  m[1][2] = up.y;
+  m[2][2] = up.z;
+
+  // return quaternion
+  Quaternion q = identity.getCopy();
+  
+  float trace = m[0][0] + m[1][1] + m[2][2];
+
+  if ( trace > 0 ) {
+    float s = 0.5f / sqrt(trace + 1.0f);
+    q.w = 0.25f / s;
+    q.x = ( m[2][1] - m[1][2] ) * s;
+    q.y = ( m[0][2] - m[2][0] ) * s;
+    q.z = ( m[1][0] - m[0][1] ) * s;
+  } else {
+    if ( m[0][0] > m[1][1] && m[0][0] > m[2][2] ) {
+      float s = 2.0f * sqrt( 1.0f + m[0][0] - m[1][1] - m[2][2]);
+      q.w = (m[2][1] - m[1][2] ) / s;
+      q.x = 0.25f * s;
+      q.y = (m[0][1] + m[1][0] ) / s;
+      q.z = (m[0][2] + m[2][0] ) / s;
+    } else if (m[1][1] > m[2][2]) {
+      float s = 2.0f * sqrt( 1.0f + m[1][1] - m[0][0] - m[2][2]);
+      q.w = (m[0][2] - m[2][0] ) / s;
+      q.x = (m[0][1] + m[1][0] ) / s;
+      q.y = 0.25f * s;
+      q.z = (m[1][2] + m[2][1] ) / s;
+    } else {
+      float s = 2.0f * sqrt( 1.0f + m[2][2] - m[0][0] - m[1][1] );
+      q.w = (m[1][0] - m[0][1] ) / s;
+      q.x = (m[0][2] + m[2][0] ) / s;
+      q.y = (m[1][2] + m[2][1] ) / s;
+      q.z = 0.25f * s;
+    }
+  }
+  
+  return q;
+}
+
+/**
+  Returns true if the given line segment intersects a sphere with the given position and radius, false otherwise.
+  I referenced https://stackoverflow.com/questions/5883169/intersection-between-a-line-and-a-sphere   for this algorithm.
+*/
+public boolean lineIntersectsSphere(PVector lineStart, PVector lineEnd, float cx, float cy, float cz, float radius) {
+  
+
+    float px = lineStart.x,
+      py = lineStart.y,
+      pz = lineStart.z;
+
+    float vx = lineEnd.x - px,
+      vy = lineEnd.y - py,
+      vz = lineEnd.z - pz;
+
+    float A = vx * vx + vy * vy + vz * vz;
+    float B = 2.0 * (px * vx + py * vy + pz * vz - vx * cx - vy * cy - vz * cz);
+    float C = px * px - 2 * px * cx + cx * cx + py * py - 2 * py * cy + cy * cy +
+      pz * pz - 2 * pz * cz + cz * cz - BULLET_TARGET_MIN_DISTANCE * BULLET_TARGET_MIN_DISTANCE;
+
+    // discriminant
+    float D = B * B - 4 * A * C;
+
+    // if discriminant is below 0, there is no intersection
+    return (!(D < 0));
+}

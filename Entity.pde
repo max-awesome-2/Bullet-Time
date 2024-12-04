@@ -354,172 +354,27 @@ public class RenderObject extends WorldObject {
   }
 }
 
-
-/**
- A StateEntity is any RenderObject that has state-defined behaviour.
- */
-public class Entity extends RenderObject {
-
-  // used by enemies to determine the alpha with which to draw faces - faces of the shape flash red when an enemy takes damage
-  private float lastHurtTime;
-
-  // set randomly whenever an enemy takes damage
-  private float damageFlashFullOpacity;
-
-  /**
-   Constructor for the Entity class - takes and assigns position, rotation, scale, shape, entity type, and a boolean indicating whether to add this Entity to the main Entity list
-   */
-  public Entity(PVector worldPos, Quaternion worldRot, PVector worldScale, ShapeTemplate t, int eType, boolean addToEntityList) {
-
-    super(worldPos, worldRot, worldScale, t, addToEntityList);
-
-    position = worldPos.copy();
-    rotation = worldRot.getCopy();
-    scale = worldScale.copy();
-
-    entityType = eType;
-
-    // set bullet hitbox size to scale x / 2
-    if (entityType == 1) {
-      hitSphereRadius = scale.x / 2;
-    }
+public class Bullet extends RenderObject {
+  
+  private PVector travelDirection;
+  
+  public Bullet(PVector p, PVector target, PVector sc, boolean addToEntityList) {
+    
+    super(p, identity, sc, loadShape("bullet.obj"), addToEntityList);
+    
+    travelDirection = (vectorSubtract(target, p)).normalize();
+    setRotation(lookRotation(travelDirection, WORLD_UP));
 
     onTransformUpdate();
   }
 
-  // draws this object to the screen using the given camera
-  @Override
-    public void render(Camera c) {
-
-    // transform the center into camera space and see if it's within FOV
-    //https://stackoverflow.com/questions/24153230/how-to-work-out-if-a-point-is-behind-the-field-of-view
-    PVector centerTransformed = camTransformPoint(position, c);
-    if (centerTransformed.z < nearClipping) return;
-    //if (!(center.z < center.x * center.x + center.y * center.y && center.z > 0)) return;
-    // end of  referenced code
-
-    // loop through all the shapes that make up this object and draw each one
-    for (Shape s : shapes) {
-
-      s.setCameraVertices(c);
-
-      // draw triangles before drawing lines
-      // get the alpha to draw faces with depending on when the last time we took damage was
-      float flashAlphaRatio = min(1, (time - lastHurtTime) / DAMAGE_FLASH_TIME);
-      if (flashAlphaRatio > 0) {
-        PVector v1, v2, v3;
-
-        // make faces flash when taking damage
-        noStroke();
-        fill(255, 0, 0, (1 - flashAlphaRatio) * damageFlashFullOpacity);
-
-        for (int i = 0; i < s.template.tris.length - 3; i += 3) {
-          v1 = s.cameraVertices[s.template.tris[i]];
-          v2 = s.cameraVertices[s.template.tris[i + 1]];
-          v3 = s.cameraVertices[s.template.tris[i + 2]];
-
-          drawTri(v1, v2, v3);
-        }
-        stroke(255);
-      }
-
-      stroke(255);
-      for (int i = 0; i <= s.template.lines.length - 2; i += 2) {
-
-        // line alpha flicker magnitude
-        float minAlphaMagOffset = 0;
-
-        // anti-seed our random with frameCount, so that even at the title screen, where we're re-seeding the random every frame to make sure the stars
-        // stay in the same spot, our letters will still flicker
-        randomSeed(frameCount * 10000 + i * 10000);
-
-        float randomAlpha = random(255 - minAlphaMagOffset, 255);
-
-
-        stroke(255, 255, 255, randomAlpha);
-
-
-        drawLine(s.cameraVertices[s.template.lines[i]], s.cameraVertices[s.template.lines[i + 1]]);
-      }
-      if (DRAW_DEBUG_AXES) {
-        stroke(0, 0, 255);
-        drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, forward), c));
-        stroke(0, 255, 0);
-        drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, up), c));
-        stroke(255, 0, 0);
-        drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, right), c));
-      }
-    }
-
-    // draw this entity's hitsphere
-    if (DRAW_HITSPHERES) {
-      noStroke();
-      fill(0, 255, 0, 100);
-
-      PVector projectedPos = projectPoint(position, c);
-      float drawX = projectedPos.x * UNITS_TO_PIXELS + HALF_WIDTH;
-      float drawY = projectedPos.y * UNITS_TO_PIXELS + HALF_WIDTH;
-      ellipse(drawX, drawY, hitSphereRadius * BULLET_ONE_RADIUS * scale.x, hitSphereRadius * BULLET_ONE_RADIUS * scale.x);
-
-      stroke(255);
-    }
-  }
-
   @Override
     public void update() {
-
-    // perform entity behaviour
-    entityBehaviour();
-
-    // render this object each frame using the main camera
+      
+    movePosition(vectorScale(travelDirection, timeScale * deltaTime * BULLET_SPEED));
+    
+    // TODO: check collisions here
+      
     render(mainCamera);
-  }
-
-  /**
-   Performs this entity's unique behaviour.
-   Will be overridden in subclasses.
-   */
-  public void entityBehaviour() {
-  }
-
-  /**
-   Makes a copy of this entity with the given position, rotation, scale
-   Will be overridden in subclasses if necessary
-   */
-  public Entity copyOf(PVector pos, Quaternion rot, PVector sc) {
-
-    Entity e = new Entity(pos, rot, sc, shapeTemplate, entityType, true);
-
-    return e;
-  }
-
-  /**
-   Checks & handles collisions between this entity and other entities.
-   The only important checks that will occur are:
-   1. player checking enemies
-   2. player checking enemy shots
-   3. enemy checking player shots
-   */
-  @Override
-    public void checkCollision(RenderObject other) {
-
-    // if we're the player, only check collisions with enemies and enemy shots
-    if (entityType == 0) {
-      //  if (other.entityType == 2 || other.entityType == 1) {
-
-      //    // since we're only checking spherical hitboxes, a hit is registered when the distance between the two entities is smaller
-      //    // than or equal to the sum of their hitsphere radii
-      //    float d = dist(position.x, position.y, position.z, other.position.x, other.position.y, other.position.z);
-      //    float hsModified = hitSphereRadius * scale.x;
-      //    float otherHSModified = other.hitSphereRadius * other.scale.x;
-
-      //    if (d < hsModified + otherHSModified) {
-      //      takeDamage(1);
-      //    }
-      //  }
-    } else if (entityType == 2) {
-
-      // TODO: check collision w/ magic missiles and such things
-    }
   }
 }

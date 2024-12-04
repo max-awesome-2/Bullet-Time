@@ -169,5 +169,4 @@ public class Quaternion {
     matrix[9] = (float) (2.0f * ((y * z) + (x * w)));
     matrix[10] = (float) (1.0f - (2.0f * ((x * x) + (y * y))));
   }
-  
 }
