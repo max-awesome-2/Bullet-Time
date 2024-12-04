@@ -220,10 +220,6 @@ public class RenderObject extends WorldObject {
 
   public PShape pShape;
 
-  // if true, this is a wireframe rendered shape and will be rendered with the wireframe renderer ONLY when testView is true
-  // if false, this is a P3D rendered shape
-  boolean wire = true;
-
   public RenderObject(PVector p, Quaternion rot, PVector sc, ShapeTemplate t, boolean addToEntityList) {
 
     super(p, rot, sc, addToEntityList);
@@ -242,7 +238,6 @@ public class RenderObject extends WorldObject {
 
     pShape = sh;
     pShape.scale(P3D_ONE_UNIT_SCALE * localScale.x);
-    wire = false;
 
     onTransformUpdate();
   }
@@ -253,11 +248,45 @@ public class RenderObject extends WorldObject {
   }
 
   public void render(Camera c) {
+    
+    // draw stored shape with P3D renderer
+    if (pShape != null) {
+      pushMatrix();
 
-    if (wire) {
-      
+      if (testView) translate(width/2, height/2);
+      //translate(testCube.position.x * wire_to_real_units, -testCube.position.y * wire_to_real_units, testCube.position.z * wire_to_real_units);
+      //translate(-mainCamera.position.x * wire_to_real_units, -mainCamera.position.y * wire_to_real_units, (mainCamera.position.z + 10) * wire_to_real_units);
+      perspective(camFOV, float(width)/float(height), 0.1, 10000);
+
+      // get rotation and translation
+      Quaternion finalRot;
+      if (testView) {
+        finalRot = mainCamera.rotation.getCopy().multiply(rotation);
+      } else  finalRot = rotation;
+
+      PVector finalTranslation = position;
+
+      // perform final rotation
+      float[] m = new float[16];
+      finalRot.toMatrix(m);
+      applyMatrix(m[0], m[1], m[2], m[3],
+        m[4], m[5], m[6], m[7],
+        m[8], m[9], m[10], m[11],
+        m[12], m[13], m[14], m[15]);
+
+      // perform final translation
+      translate(finalTranslation.x * wire_to_real_units, -finalTranslation.y * wire_to_real_units, (-finalTranslation.z) * wire_to_real_units);
+
+      // render the shape
+      shape(pShape);
+      popMatrix();
+    }
+    
+    // draw shapes with wire renderer
+    if (shapes.size() > 0) {
+
       if (!testView) return;
-      
+
       // loop through all the shapes that make up this object and draw each one
       for (Shape s : shapes) {
 
@@ -292,37 +321,8 @@ public class RenderObject extends WorldObject {
           drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, right), c));
         }
       }
-    } else {
-      pushMatrix();
-
-      if (testView) translate(width/2, height/2);
-      //translate(testCube.position.x * wire_to_real_units, -testCube.position.y * wire_to_real_units, testCube.position.z * wire_to_real_units);
-      //translate(-mainCamera.position.x * wire_to_real_units, -mainCamera.position.y * wire_to_real_units, (mainCamera.position.z + 10) * wire_to_real_units);
-      perspective(camFOV, float(width)/float(height), 0.1, 10000);
-
-      // get rotation and translation
-      Quaternion finalRot;
-      if (testView) {
-        finalRot = mainCamera.rotation.getCopy().multiply(rotation);
-      } else  finalRot = rotation;
-
-      PVector finalTranslation = position;
-      
-      // perform final rotation
-      float[] m = new float[16];
-      finalRot.toMatrix(m);
-      applyMatrix(m[0], m[1], m[2], m[3],
-        m[4], m[5], m[6], m[7],
-        m[8], m[9], m[10], m[11],
-        m[12], m[13], m[14], m[15]);
-
-      // perform final translation
-      translate(finalTranslation.x * wire_to_real_units, -finalTranslation.y * wire_to_real_units, (-finalTranslation.z) * wire_to_real_units);
-      
-      // render the shape
-      shape(pShape);
-      popMatrix();
-    }
+    } 
+    
   }
 
   protected void updateShapes() {
@@ -344,182 +344,101 @@ public class RenderObject extends WorldObject {
   }
 
   /**
-   Removes this Entity from the main Entity list, effectively despawning it.
+   Removes this object from the main updateables list, effectively despawning it.
    */
   public void despawn() {
     updateables.remove(this);
   }
-
-  public void checkCollision(RenderObject other) {
-  }
 }
 
-
 /**
- A StateEntity is any RenderObject that has state-defined behaviour.
+ A BoundingPrism represents a rectangular hitbox.
+ It contains a method for determining whether it is colliding with another bounding prism.
  */
-public class Entity extends RenderObject {
+public class BoundingPrism extends RenderObject {
 
-  // used by enemies to determine the alpha with which to draw faces - faces of the shape flash red when an enemy takes damage
-  private float lastHurtTime;
+  // since our game only has two types of hitboxes - player and bullet hitboxes - we can just have a boolean instead of any kind of tag system
+  // we can trigger a method in the main file when a collision between the two types is detected here
+  public boolean isPlayer;
 
-  // set randomly whenever an enemy takes damage
-  private float damageFlashFullOpacity;
+  public BoundingPrism(PVector p, Quaternion rot, PVector sc, boolean isPl) {
+    super(p, rot, sc, cube, true);
 
-  /**
-   Constructor for the Entity class - takes and assigns position, rotation, scale, shape, entity type, and a boolean indicating whether to add this Entity to the main Entity list
-   */
-  public Entity(PVector worldPos, Quaternion worldRot, PVector worldScale, ShapeTemplate t, int eType, boolean addToEntityList) {
+    boundingPrisms.add(this);
 
-    super(worldPos, worldRot, worldScale, t, addToEntityList);
-
-    position = worldPos.copy();
-    rotation = worldRot.getCopy();
-    scale = worldScale.copy();
-
-    entityType = eType;
-
-    // set bullet hitbox size to scale x / 2
-    if (entityType == 1) {
-      hitSphereRadius = scale.x / 2;
-    }
-
-    onTransformUpdate();
+    isPlayer = isPl;
   }
+  
+   public BoundingPrism(PVector p, Quaternion rot, PVector sc, PShape shape, boolean isPl) {
+    super(p, rot, sc, cube, true);
+    pShape = shape;
 
-  // draws this object to the screen using the given camera
-  @Override
-    public void render(Camera c) {
+    boundingPrisms.add(this);
 
-    // transform the center into camera space and see if it's within FOV
-    //https://stackoverflow.com/questions/24153230/how-to-work-out-if-a-point-is-behind-the-field-of-view
-    PVector centerTransformed = camTransformPoint(position, c);
-    if (centerTransformed.z < nearClipping) return;
-    //if (!(center.z < center.x * center.x + center.y * center.y && center.z > 0)) return;
-    // end of  referenced code
-
-    // loop through all the shapes that make up this object and draw each one
-    for (Shape s : shapes) {
-
-      s.setCameraVertices(c);
-
-      // draw triangles before drawing lines
-      // get the alpha to draw faces with depending on when the last time we took damage was
-      float flashAlphaRatio = min(1, (time - lastHurtTime) / DAMAGE_FLASH_TIME);
-      if (flashAlphaRatio > 0) {
-        PVector v1, v2, v3;
-
-        // make faces flash when taking damage
-        noStroke();
-        fill(255, 0, 0, (1 - flashAlphaRatio) * damageFlashFullOpacity);
-
-        for (int i = 0; i < s.template.tris.length - 3; i += 3) {
-          v1 = s.cameraVertices[s.template.tris[i]];
-          v2 = s.cameraVertices[s.template.tris[i + 1]];
-          v3 = s.cameraVertices[s.template.tris[i + 2]];
-
-          drawTri(v1, v2, v3);
-        }
-        stroke(255);
-      }
-
-      stroke(255);
-      for (int i = 0; i <= s.template.lines.length - 2; i += 2) {
-
-        // line alpha flicker magnitude
-        float minAlphaMagOffset = 0;
-
-        // anti-seed our random with frameCount, so that even at the title screen, where we're re-seeding the random every frame to make sure the stars
-        // stay in the same spot, our letters will still flicker
-        randomSeed(frameCount * 10000 + i * 10000);
-
-        float randomAlpha = random(255 - minAlphaMagOffset, 255);
-
-
-        stroke(255, 255, 255, randomAlpha);
-
-
-        drawLine(s.cameraVertices[s.template.lines[i]], s.cameraVertices[s.template.lines[i + 1]]);
-      }
-      if (DRAW_DEBUG_AXES) {
-        stroke(0, 0, 255);
-        drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, forward), c));
-        stroke(0, 255, 0);
-        drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, up), c));
-        stroke(255, 0, 0);
-        drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, right), c));
-      }
-    }
-
-    // draw this entity's hitsphere
-    if (DRAW_HITSPHERES) {
-      noStroke();
-      fill(0, 255, 0, 100);
-
-      PVector projectedPos = projectPoint(position, c);
-      float drawX = projectedPos.x * UNITS_TO_PIXELS + HALF_WIDTH;
-      float drawY = projectedPos.y * UNITS_TO_PIXELS + HALF_WIDTH;
-      ellipse(drawX, drawY, hitSphereRadius * BULLET_ONE_RADIUS * scale.x, hitSphereRadius * BULLET_ONE_RADIUS * scale.x);
-
-      stroke(255);
-    }
+    isPlayer = isPl;
   }
 
   @Override
     public void update() {
+    // only check collisions with prisms of the opposite type
+    // also avoids checking self-collisions
+    for (BoundingPrism prism : boundingPrisms) {
+      if (prism.isPlayer != isPlayer) {
+        if (intersects(prism)) {
+          onBulletHitPlayer();
+        }
+      }
+    }
 
-    // perform entity behaviour
-    entityBehaviour();
-
-    // render this object each frame using the main camera
     render(mainCamera);
   }
 
-  /**
-   Performs this entity's unique behaviour.
-   Will be overridden in subclasses.
-   */
-  public void entityBehaviour() {
-  }
-
-  /**
-   Makes a copy of this entity with the given position, rotation, scale
-   Will be overridden in subclasses if necessary
-   */
-  public Entity copyOf(PVector pos, Quaternion rot, PVector sc) {
-
-    Entity e = new Entity(pos, rot, sc, shapeTemplate, entityType, true);
-
-    return e;
-  }
-
-  /**
-   Checks & handles collisions between this entity and other entities.
-   The only important checks that will occur are:
-   1. player checking enemies
-   2. player checking enemy shots
-   3. enemy checking player shots
-   */
   @Override
-    public void checkCollision(RenderObject other) {
+    public void despawn() {
+    super.despawn();
+    boundingPrisms.remove(this);
+  }
 
-    // if we're the player, only check collisions with enemies and enemy shots
-    if (entityType == 0) {
-      //  if (other.entityType == 2 || other.entityType == 1) {
+  public boolean intersects(BoundingPrism other) {
+    // in order to determine that two shapes are not colliding, we need to find one plane that separates them
+    // for rectangular prisms, that plane is guaranteed to be one of the planes that the prism's faces is on
 
-      //    // since we're only checking spherical hitboxes, a hit is registered when the distance between the two entities is smaller
-      //    // than or equal to the sum of their hitsphere radii
-      //    float d = dist(position.x, position.y, position.z, other.position.x, other.position.y, other.position.z);
-      //    float hsModified = hitSphereRadius * scale.x;
-      //    float otherHSModified = other.hitSphereRadius * other.scale.x;
+    // referenced pseudocode at https://www.gamedev.net/forums/topic/628444-collision-detection-between-non-axis-aligned-rectangular-prisms/
 
-      //    if (d < hsModified + otherHSModified) {
-      //      takeDamage(1);
-      //    }
-      //  }
-    } else if (entityType == 2) {
+    // list to store all axes that we'll be testing
+    PVector[] axes = new PVector[15];
 
-      // TODO: check collision w/ magic missiles and such things
+    // add the 3 axis of each box
+    axes[0] = forward;
+    axes[1] = up;
+    axes[2] = right;
+    axes[3] = other.forward;
+    axes[4] = other.up;
+    axes[5] = other.right;
+
+    // add the cross products of each set of axes
+    for (int i = 0; i < 3; i ++) {
+      for (int j = 0; j < 3; j++) {
+        axes[6 + i * 3 + j] = axes[i].cross(axes[3 + j]);
+      }
     }
+
+    // check overlap on each axis
+    for (PVector axis : axes) {
+      // skip over (0, 0, 0) axes that result from crossing the same axis
+      // we will get NaNs and things will go crazy
+      if (axis.x == 0 && axis.y == 0 && axis.z == 0) continue;
+
+      PVector prismARange = projectPrism(this, axis);
+      PVector prismBRange = projectPrism(other, axis);
+
+      if (!rangeIntersects(prismARange, prismBRange)) {
+        // we have found a plane that separates the two prisms!
+        return false;
+      }
+    }
+
+    // no plane separating the two prisms was found, meaning the prisms are colliding
+    return true;
   }
 }

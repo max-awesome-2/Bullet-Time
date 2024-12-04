@@ -51,14 +51,17 @@ public Camera mainCamera, overlayCamera;
 // object to which the main camera is parented
 public WorldObject camParent;
 
-public Entity player;
-
 // list of updateables that will be iterated over each iteration of the game loop
-GatedArrayList<Updateable> updateables, p3dObjects;
+GatedArrayList<Updateable> updateables;
 
-boolean testView = false;
+// list of bounding prisms - needs to be separate so that each prism can have a reference to all other prisms to check for collisions with during their update method
+GatedArrayList<BoundingPrism> boundingPrisms;
+
+boolean testView = true;
 
 float P3D_ONE_UNIT_SCALE = 50;
+
+RenderObject testCube1, testCube2;
 
 // testing:
 boolean qHeld, wHeld, eHeld, rHeld, aHeld, sHeld, dHeld, fHeld;
@@ -68,6 +71,9 @@ void setup() {
 
   // initialize updateables list
   updateables = new GatedArrayList<Updateable>();
+  
+  // initialize bounding prisms list
+  boundingPrisms = new GatedArrayList<BoundingPrism>();
 
   // initialize millis value
   lastMillis = millis();
@@ -84,7 +90,8 @@ void setup() {
   //setupController();
 
   // shape test
-  RenderObject testCube2 = new RenderObject(new PVector(0, 0, 0), identity, one, loadShape("test_cube.obj"), true);
+  testCube1 = new BoundingPrism(new PVector(0, 0, 0), identity, one, true);
+  testCube2 = new BoundingPrism(new PVector(0, 0, 0), identity, one, false);
 
   //testCube.rotateBy(WORLD_FORWARD, 45);
   //mainCamera.rotateBy(WORLD_FORWARD, 45);
@@ -113,7 +120,6 @@ void draw() {
   //camera(cX, cY, cZ, width/2, height/2, 0, 0, 1, 0);
   if (!testView) camera(mainCamera.position.x * wire_to_real_units, mainCamera.position.y * wire_to_real_units, mainCamera.position.z * wire_to_real_units, 0, 0, 0, 0, 1, 0);
 
-
   updateUpdateables();
 
   //if (testView) {
@@ -131,27 +137,38 @@ void draw() {
     //camParent.rotateByLocal(WORLD_RIGHT, 30 * deltaTime);
     //mainCamera.movePosition(new PVector(0, 0, deltaTime * 5));
     //cY += deltaTime * 50;
+    testCube1.movePosition(new PVector(deltaTime * 5, 0, 0));
   }
   if (rHeld) {
     //camParent.rotateByLocal(WORLD_RIGHT, -30 * deltaTime);
     //mainCamera.movePosition(new PVector(0, 0, deltaTime * -5));
     //cY -= deltaTime * 50;
+    testCube1.movePosition(new PVector(deltaTime * -5, 0, 0));
+
   }
 
   if (aHeld) {
     //camParent.rotateBy(WORLD_FORWARD, 30 * deltaTime);
     //cZ += deltaTime * 50;
+    testCube1.rotateBy(WORLD_FORWARD, 30 * deltaTime);
+
   }
   if (sHeld) {
     //camParent.rotateBy(WORLD_FORWARD, -30 * deltaTime);
     //cZ -= deltaTime * 50;
+        testCube1.rotateBy(WORLD_FORWARD, -30 * deltaTime);
+
   }
 
   if (dHeld) {
     //testCube.rotateBy(WORLD_UP, 30 * deltaTime);
+        testCube1.movePosition(new PVector(0, deltaTime * 5, 0));
+
   }
   if (fHeld) {
     //testCube.rotateBy(WORLD_UP, -30 * deltaTime);
+            testCube1.movePosition(new PVector(0, deltaTime * -5, 0));
+
   }
 }
 
@@ -220,11 +237,19 @@ void updateTime() {
 
 void updateUpdateables() {
 
-  // update gated list (do queued adds / removals)
+  // update gated lists (do queued adds / removals)
   updateables.update();
+  boundingPrisms.update();
 
   // update all updateable objects
   for (Updateable u : updateables) {
     u.update();
   }
+}
+
+/**
+  Called when the player hits a bullet
+*/
+public void onBulletHitPlayer() {
+  println("BULLET HIT PLAYER!");
 }
