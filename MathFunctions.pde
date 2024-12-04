@@ -116,84 +116,92 @@ public PVector moveTowardsVector(PVector a, PVector b, float by) {
  https://math.stackexchange.com/questions/3140136/how-to-create-a-quaternion-rotation-from-a-forward-and-up-vector
  and
  https://stackoverflow.com/questions/52413464/look-at-quaternion-using-up-vector
+ and 
+ https://discussions.unity.com/t/what-is-the-source-code-of-quaternion-lookrotation/72474/3
  */
 public Quaternion lookRotation(PVector forward, PVector up) {
-  PVector left = forward.cross(up);
 
-  float[][] m = new float[3][];
-  for (int i = 0; i < 3; i++) {
-    m[i] = new float[3];
+  PVector vector = forward.normalize().copy();
+
+  PVector vector2 = up.cross(vector);
+  PVector vector3 = vector.cross(vector2);
+  float m00 = vector2.x;
+  float m01 = vector2.y;
+  float m02 = vector2.z;
+  float m10 = vector3.x;
+  float m11 = vector3.y;
+  float m12 = vector3.z;
+  float m20 = vector.x;
+  float m21 = vector.y;
+  float m22 = vector.z;
+
+
+  float num8 = (m00 + m11) + m22;
+  Quaternion quaternion = identity.getCopy();
+  if (num8 > 0f)
+  {
+    float num = sqrt(num8 + 1f);
+    quaternion.w = num * 0.5f;
+    num = 0.5f / num;
+    quaternion.x = (m12 - m21) * num;
+    quaternion.y = (m20 - m02) * num;
+    quaternion.z = (m01 - m10) * num;
+    return quaternion;
   }
-
-  m[0][0] = forward.x;
-  m[1][0] = forward.y;
-  m[2][0] = forward.z;
-  m[0][1] = left.x;
-  m[1][1] = left.y;
-  m[2][1] = left.z;
-  m[0][2] = up.x;
-  m[1][2] = up.y;
-  m[2][2] = up.z;
-
-  // return quaternion
-  Quaternion q = identity.getCopy();
-  
-  float trace = m[0][0] + m[1][1] + m[2][2];
-
-  if ( trace > 0 ) {
-    float s = 0.5f / sqrt(trace + 1.0f);
-    q.w = 0.25f / s;
-    q.x = ( m[2][1] - m[1][2] ) * s;
-    q.y = ( m[0][2] - m[2][0] ) * s;
-    q.z = ( m[1][0] - m[0][1] ) * s;
-  } else {
-    if ( m[0][0] > m[1][1] && m[0][0] > m[2][2] ) {
-      float s = 2.0f * sqrt( 1.0f + m[0][0] - m[1][1] - m[2][2]);
-      q.w = (m[2][1] - m[1][2] ) / s;
-      q.x = 0.25f * s;
-      q.y = (m[0][1] + m[1][0] ) / s;
-      q.z = (m[0][2] + m[2][0] ) / s;
-    } else if (m[1][1] > m[2][2]) {
-      float s = 2.0f * sqrt( 1.0f + m[1][1] - m[0][0] - m[2][2]);
-      q.w = (m[0][2] - m[2][0] ) / s;
-      q.x = (m[0][1] + m[1][0] ) / s;
-      q.y = 0.25f * s;
-      q.z = (m[1][2] + m[2][1] ) / s;
-    } else {
-      float s = 2.0f * sqrt( 1.0f + m[2][2] - m[0][0] - m[1][1] );
-      q.w = (m[1][0] - m[0][1] ) / s;
-      q.x = (m[0][2] + m[2][0] ) / s;
-      q.y = (m[1][2] + m[2][1] ) / s;
-      q.z = 0.25f * s;
-    }
+  if ((m00 >= m11) && (m00 >= m22))
+  {
+    float num7 = sqrt(((1f + m00) - m11) - m22);
+    float num4 = 0.5f / num7;
+    quaternion.x = 0.5f * num7;
+    quaternion.y = (m01 + m10) * num4;
+    quaternion.z = (m02 + m20) * num4;
+    quaternion.w = (m12 - m21) * num4;
+    return quaternion;
+  }
+  if (m11 > m22)
+  {
+    float num6 = sqrt(((1f + m11) - m00) - m22);
+    float num3 = 0.5f / num6;
+    quaternion.x = (m10+ m01) * num3;
+    quaternion.y = 0.5f * num6;
+    quaternion.z = (m21 + m12) * num3;
+    quaternion.w = (m20 - m02) * num3;
+    return quaternion;
   }
   
-  return q;
+  float num5 = sqrt(((1f + m22) - m00) - m11);
+  float num2 = 0.5f / num5;
+  quaternion.x = (m20 + m02) * num2;
+  quaternion.y = (m21 + m12) * num2;
+  quaternion.z = 0.5f * num5;
+  quaternion.w = (m01 - m10) * num2;
+
+  return quaternion;
 }
 
 /**
-  Returns true if the given line segment intersects a sphere with the given position and radius, false otherwise.
-  I referenced https://stackoverflow.com/questions/5883169/intersection-between-a-line-and-a-sphere   for this algorithm.
-*/
+ Returns true if the given line segment intersects a sphere with the given position and radius, false otherwise.
+ I referenced https://stackoverflow.com/questions/5883169/intersection-between-a-line-and-a-sphere   for this algorithm.
+ */
 public boolean lineIntersectsSphere(PVector lineStart, PVector lineEnd, float cx, float cy, float cz, float radius) {
-  
 
-    float px = lineStart.x,
-      py = lineStart.y,
-      pz = lineStart.z;
 
-    float vx = lineEnd.x - px,
-      vy = lineEnd.y - py,
-      vz = lineEnd.z - pz;
+  float px = lineStart.x,
+    py = lineStart.y,
+    pz = lineStart.z;
 
-    float A = vx * vx + vy * vy + vz * vz;
-    float B = 2.0 * (px * vx + py * vy + pz * vz - vx * cx - vy * cy - vz * cz);
-    float C = px * px - 2 * px * cx + cx * cx + py * py - 2 * py * cy + cy * cy +
-      pz * pz - 2 * pz * cz + cz * cz - BULLET_TARGET_MIN_DISTANCE * BULLET_TARGET_MIN_DISTANCE;
+  float vx = lineEnd.x - px,
+    vy = lineEnd.y - py,
+    vz = lineEnd.z - pz;
 
-    // discriminant
-    float D = B * B - 4 * A * C;
+  float A = vx * vx + vy * vy + vz * vz;
+  float B = 2.0 * (px * vx + py * vy + pz * vz - vx * cx - vy * cy - vz * cz);
+  float C = px * px - 2 * px * cx + cx * cx + py * py - 2 * py * cy + cy * cy +
+    pz * pz - 2 * pz * cz + cz * cz - BULLET_TARGET_MIN_DISTANCE * BULLET_TARGET_MIN_DISTANCE;
 
-    // if discriminant is below 0, there is no intersection
-    return (!(D < 0));
+  // discriminant
+  float D = B * B - 4 * A * C;
+
+  // if discriminant is below 0, there is no intersection
+  return (!(D < 0));
 }

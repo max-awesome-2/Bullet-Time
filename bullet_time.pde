@@ -65,7 +65,7 @@ public WorldObject camParent;
 // list of updateables that will be iterated over each iteration of the game loop
 GatedArrayList<Updateable> updateables, p3dObjects;
 
-boolean testView = false;
+boolean testView = true;
 
 float P3D_ONE_UNIT_SCALE = 50;
 
@@ -96,7 +96,13 @@ void setup() {
   //RenderObject testCube2 = new RenderObject(new PVector(0, 0, 0), identity, one, loadShape("test_cube.obj"), true);
   
   //println("A intersects: " + lineIntersectsSphere(new PVector(-5, -0.75, 0), new PVector(5, 0.-75, 0), 0, 0, 0, 1));
-  onRoundStart(10);
+  //onRoundStart(10);
+  
+  RenderObject c = new RenderObject(zero, lookRotation(WORLD_UP, WORLD_RIGHT), new PVector(1, 1, 3), cube, true);
+  RenderObject o = new RenderObject(zero, lookRotation(WORLD_UP, WORLD_RIGHT), one, loadShape("bullet.obj"), true);
+  
+  println("identity: " + identity);
+  println("right up: " +  lookRotation(WORLD_RIGHT, WORLD_UP));
 
   //testCube.rotateBy(WORLD_FORWARD, 45);
   //mainCamera.rotateBy(WORLD_FORWARD, 45);
@@ -107,7 +113,7 @@ float wire_to_real_units = 50;
 
 void draw() {
 
-  background(50);
+  background(100);
   lights();
 
   // calculate delta time & increment time
