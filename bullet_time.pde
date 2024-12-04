@@ -96,13 +96,13 @@ void setup() {
   //RenderObject testCube2 = new RenderObject(new PVector(0, 0, 0), identity, one, loadShape("test_cube.obj"), true);
   
   //println("A intersects: " + lineIntersectsSphere(new PVector(-5, -0.75, 0), new PVector(5, 0.-75, 0), 0, 0, 0, 1));
-  //onRoundStart(10);
+  onRoundStart(10);
   
-  RenderObject c = new RenderObject(zero, lookRotation(WORLD_UP, WORLD_RIGHT), new PVector(1, 1, 3), cube, true);
-  RenderObject o = new RenderObject(zero, lookRotation(WORLD_UP, WORLD_RIGHT), one, loadShape("bullet.obj"), true);
+  //RenderObject c = new RenderObject(zero, lookRotation(WORLD_UP, WORLD_RIGHT), new PVector(1, 1, 3), cube, true);
+  RenderObject o = new RenderObject(zero, identity, one, loadShape("bullet.obj"), true);
   
-  println("identity: " + identity);
-  println("right up: " +  lookRotation(WORLD_RIGHT, WORLD_UP));
+  //println("identity: " + identity);
+  //println("right up: " +  lookRotation(WORLD_RIGHT, WORLD_UP));
 
   //testCube.rotateBy(WORLD_FORWARD, 45);
   //mainCamera.rotateBy(WORLD_FORWARD, 45);
@@ -267,7 +267,6 @@ private void spawnBullet() {
   // now pick a target, ensuring that the selected target doesn't make the bullet travel through
   boolean validTarget = false;
   while (!validTarget) {
-    println("AAAAAA");
     randDirection = new PVector(random(1), random(1), random(1)).normalize();
     targetPos = vectorScale(randDirection, random(BULLET_TARGET_MIN_DISTANCE, BULLET_TARGET_MAX_DISTANCE));
 

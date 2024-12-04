@@ -363,7 +363,7 @@ public class Bullet extends RenderObject {
     super(p, identity, sc, loadShape("bullet.obj"), addToEntityList);
     
     travelDirection = (vectorSubtract(target, p)).normalize();
-    setRotation(lookRotation(travelDirection, WORLD_UP));
+    setRotation(lookRotation(travelDirection, getArbitraryPerpendicular(travelDirection)));
 
     onTransformUpdate();
   }

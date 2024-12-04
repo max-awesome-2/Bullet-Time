@@ -205,3 +205,23 @@ public boolean lineIntersectsSphere(PVector lineStart, PVector lineEnd, float cx
   // if discriminant is below 0, there is no intersection
   return (!(D < 0));
 }
+
+/**
+  Returns an arbitrary vector perpendicular for the given vector.
+  Referenced https://stackoverflow.com/questions/41275311/a-good-way-to-find-a-vector-perpendicular-to-another-vector
+*/
+public PVector getArbitraryPerpendicular(PVector a) {
+ 
+  PVector b;
+  
+  // make b a vector that is guaranteed to not be colinear
+  if (a.x != 0 && a.y == 0 && a.z == 0) {
+    b = new PVector(0, 1, 0);
+    
+  } else {
+   b = new PVector(1, 0, 0); 
+  }
+  
+  return b.cross(a);
+  
+}
