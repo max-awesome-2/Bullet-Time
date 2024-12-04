@@ -61,7 +61,7 @@ boolean testView = true;
 
 float P3D_ONE_UNIT_SCALE = 50;
 
-RenderObject testCube1, testCube2;
+RenderObject player;
 
 // testing:
 boolean qHeld, wHeld, eHeld, rHeld, aHeld, sHeld, dHeld, fHeld;
@@ -71,7 +71,7 @@ void setup() {
 
   // initialize updateables list
   updateables = new GatedArrayList<Updateable>();
-  
+
   // initialize bounding prisms list
   boundingPrisms = new GatedArrayList<BoundingPrism>();
 
@@ -89,9 +89,38 @@ void setup() {
 
   //setupController();
 
-  // shape test
-  testCube1 = new BoundingPrism(new PVector(0, 0, 0), identity, one, true);
-  testCube2 = new BoundingPrism(new PVector(0, 0, 0), identity, one, false);
+  // initialize player object & player hitboxes
+  player = new RenderObject(zero, identity, one, loadShape("guy.obj"), true);
+
+  float guyThickness = 0.55;
+
+  // body
+  BoundingPrism b1 = new BoundingPrism(new PVector(0, -1, 0), identity, new PVector(guyThickness, 4.3, 2), true);
+
+  // head
+  BoundingPrism b2 = new BoundingPrism(new PVector(0, -4, 0), identity, new PVector(guyThickness, 1, 3), true);
+  BoundingPrism b3 = new BoundingPrism(new PVector(0, -5, 0), identity, new PVector(guyThickness, 1, 2.25), true);
+
+  // arms
+  BoundingPrism b4 = new BoundingPrism(new PVector(0, -2.95, -2.2), new Quaternion(57, WORLD_RIGHT), new PVector(guyThickness, 3.5, 1.15), true);
+  BoundingPrism b5 = new BoundingPrism(new PVector(0, -2.95, 2.2), new Quaternion(-57, WORLD_RIGHT), new PVector(guyThickness, 3.5, 1.15), true);
+  
+  // legs
+  BoundingPrism b6 = new BoundingPrism(new PVector(0, 2.45, -1.8), new Quaternion(-53, WORLD_RIGHT), new PVector(guyThickness, 4.75, 1.4), true);
+    BoundingPrism b7 = new BoundingPrism(new PVector(0, 2.45, 1.8), new Quaternion(53, WORLD_RIGHT), new PVector(guyThickness, 4.75, 1.4), true);
+
+  
+  b1.setParent(player);
+  b2.setParent(player);
+  b3.setParent(player);
+  b4.setParent(player);
+  b5.setParent(player);
+  b6.setParent(player);
+  b7.setParent(player);
+
+
+
+
 
   //testCube.rotateBy(WORLD_FORWARD, 45);
   //mainCamera.rotateBy(WORLD_FORWARD, 45);
@@ -123,52 +152,49 @@ void draw() {
   updateUpdateables();
 
   //if (testView) {
-    if (qHeld) {
-      camParent.rotateByLocal(WORLD_UP, 30 * deltaTime);
-      //cX += deltaTime * 50;
-    }
-    if (wHeld) {
-      camParent.rotateByLocal(WORLD_UP, -30 * deltaTime);
-      //cX -= deltaTime * 50;
-    }
+  if (qHeld) {
+    camParent.rotateByLocal(WORLD_UP, 60 * deltaTime);
+    //cX += deltaTime * 50;
+  }
+  if (wHeld) {
+    camParent.rotateByLocal(WORLD_UP, -60 * deltaTime);
+    //cX -= deltaTime * 50;
+  }
   //}
 
   if (eHeld) {
+
     //camParent.rotateByLocal(WORLD_RIGHT, 30 * deltaTime);
-    //mainCamera.movePosition(new PVector(0, 0, deltaTime * 5));
+    player.movePosition(new PVector(0, deltaTime * 5, 0));
     //cY += deltaTime * 50;
-    testCube1.movePosition(new PVector(deltaTime * 5, 0, 0));
+    //testCube1.movePosition(new PVector(deltaTime * 5, 0, 0));
   }
   if (rHeld) {
-    //camParent.rotateByLocal(WORLD_RIGHT, -30 * deltaTime);
-    //mainCamera.movePosition(new PVector(0, 0, deltaTime * -5));
-    //cY -= deltaTime * 50;
-    testCube1.movePosition(new PVector(deltaTime * -5, 0, 0));
 
+    //camParent.rotateByLocal(WORLD_RIGHT, -30 * deltaTime);
+    player.movePosition(new PVector(0, deltaTime * -5, 0));
+    //cY -= deltaTime * 50;
+    //testCube1.movePosition(new PVector(deltaTime * -5, 0, 0));
   }
 
   if (aHeld) {
     //camParent.rotateBy(WORLD_FORWARD, 30 * deltaTime);
     //cZ += deltaTime * 50;
-    testCube1.rotateBy(WORLD_FORWARD, 30 * deltaTime);
-
+    //testCube1.rotateBy(WORLD_FORWARD, 30 * deltaTime);
   }
   if (sHeld) {
     //camParent.rotateBy(WORLD_FORWARD, -30 * deltaTime);
     //cZ -= deltaTime * 50;
-        testCube1.rotateBy(WORLD_FORWARD, -30 * deltaTime);
-
+    //testCube1.rotateBy(WORLD_FORWARD, -30 * deltaTime);
   }
 
   if (dHeld) {
     //testCube.rotateBy(WORLD_UP, 30 * deltaTime);
-        testCube1.movePosition(new PVector(0, deltaTime * 5, 0));
-
+    //testCube1.movePosition(new PVector(0, deltaTime * 5, 0));
   }
   if (fHeld) {
     //testCube.rotateBy(WORLD_UP, -30 * deltaTime);
-            testCube1.movePosition(new PVector(0, deltaTime * -5, 0));
-
+    //testCube1.movePosition(new PVector(0, deltaTime * -5, 0));
   }
 }
 
@@ -248,8 +274,8 @@ void updateUpdateables() {
 }
 
 /**
-  Called when the player hits a bullet
-*/
+ Called when the player hits a bullet
+ */
 public void onBulletHitPlayer() {
   println("BULLET HIT PLAYER!");
 }

@@ -275,7 +275,7 @@ public class RenderObject extends WorldObject {
         m[12], m[13], m[14], m[15]);
 
       // perform final translation
-      translate(finalTranslation.x * wire_to_real_units, -finalTranslation.y * wire_to_real_units, (-finalTranslation.z) * wire_to_real_units);
+      translate(finalTranslation.x * wire_to_real_units, finalTranslation.y * wire_to_real_units, (-finalTranslation.z) * wire_to_real_units);
 
       // render the shape
       shape(pShape);
