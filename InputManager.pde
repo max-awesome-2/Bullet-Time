@@ -11,7 +11,7 @@ public void setupController() {
 
   controllers = new GatedArrayList<SerialController>();
 
-  SerialController hand = new SerialController("Stick Guy", "COM6");
+  SerialController hand = new SerialController("Bill Bullet", "COM6");
 }
 
 public void checkControllerInput() {
@@ -37,6 +37,6 @@ public void serialMessageReceived(String msg) {
       comp4 = Float.parseFloat(split[4]);
 
 
-    testCube.setRotation(new Quaternion(comp1, comp2, comp4, -comp3));
+    //testCube.setRotation(new Quaternion(comp1, comp2, comp4, -comp3));
   }
 }

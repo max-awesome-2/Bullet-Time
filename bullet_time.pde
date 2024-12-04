@@ -56,11 +56,9 @@ public Entity player;
 // list of updateables that will be iterated over each iteration of the game loop
 GatedArrayList<Updateable> updateables, p3dObjects;
 
-RenderObject testCube;
 boolean testView = false;
 
-
-PShape pCube;
+float P3D_ONE_UNIT_SCALE = 50;
 
 // testing:
 boolean qHeld, wHeld, eHeld, rHeld, aHeld, sHeld, dHeld, fHeld;
@@ -86,10 +84,7 @@ void setup() {
   //setupController();
 
   // shape test
-  pCube = loadShape("test_cube.obj");
-  pCube.scale(wire_to_real_units);
-  testCube = new RenderObject(new PVector(0, 0, 0), identity, one, cube, true);
-
+  RenderObject testCube2 = new RenderObject(new PVector(0, 0, 0), identity, one, loadShape("test_cube.obj"), true);
 
   //testCube.rotateBy(WORLD_FORWARD, 45);
   //mainCamera.rotateBy(WORLD_FORWARD, 45);
@@ -118,43 +113,6 @@ void draw() {
   //camera(cX, cY, cZ, width/2, height/2, 0, 0, 1, 0);
   if (!testView) camera(mainCamera.position.x * wire_to_real_units, mainCamera.position.y * wire_to_real_units, mainCamera.position.z * wire_to_real_units, 0, 0, 0, 0, 1, 0);
 
-  // cube test
-  pushMatrix();
-
-  if (testView) translate(width/2, height/2);
-  //translate(testCube.position.x * wire_to_real_units, -testCube.position.y * wire_to_real_units, testCube.position.z * wire_to_real_units);
-  //translate(-mainCamera.position.x * wire_to_real_units, -mainCamera.position.y * wire_to_real_units, (mainCamera.position.z + 10) * wire_to_real_units);
-  perspective(camFOV, float(width)/float(height), 0.1, 10000);
-
-  Quaternion finalRot;
-  if (testView) {
-    finalRot = mainCamera.rotation.getCopy().multiply(testCube.rotation);
-  } else  finalRot = testCube.rotation;
-
-  PVector finalTranslation = testCube.position;
-
-  float[] m = new float[16];
-  finalRot.toMatrix(m);
-  applyMatrix(m[0], m[1], m[2], m[3],
-    m[4], m[5], m[6], m[7],
-    m[8], m[9], m[10], m[11],
-    m[12], m[13], m[14], m[15]);
-
-  translate(finalTranslation.x * wire_to_real_units, -finalTranslation.y * wire_to_real_units, (-finalTranslation.z) * wire_to_real_units);
-
-
-  //println("testcube projected on wire camera: " + projectPoint(testCube.position, mainCamera));
-  //float[] m = new float[16];
-  //mainCamera.rotation.toMatrix(m);
-  //applyMatrix(m[0], m[1], m[2], m[3],
-  //  m[4], m[5], m[6], m[7],
-  //  m[8], m[9], m[10], m[11],
-  //  m[12], m[13], m[14], m[15]);
-
-  //translate(mainCamera.position.x * wire_to_real_units, mainCamera.position.y * wire_to_real_units, -(mainCamera.position.z + 10) * wire_to_real_units);
-
-  shape(pCube);
-  popMatrix();
 
   updateUpdateables();
 
@@ -191,11 +149,9 @@ void draw() {
 
   if (dHeld) {
     //testCube.rotateBy(WORLD_UP, 30 * deltaTime);
-    testCube.movePosition(vectorScale(WORLD_RIGHT, 5 * deltaTime));
   }
   if (fHeld) {
     //testCube.rotateBy(WORLD_UP, -30 * deltaTime);
-    testCube.movePosition(vectorScale(WORLD_RIGHT, -5 * deltaTime));
   }
 }
 

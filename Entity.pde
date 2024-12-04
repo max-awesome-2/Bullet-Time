@@ -218,6 +218,12 @@ public class RenderObject extends WorldObject {
   // for enemies, shots, and the player, their hitbox is spherical, and its radius is defined here
   public float hitSphereRadius = 0.5;
 
+  public PShape pShape;
+
+  // if true, this is a wireframe rendered shape and will be rendered with the wireframe renderer ONLY when testView is true
+  // if false, this is a P3D rendered shape
+  boolean wire = true;
+
   public RenderObject(PVector p, Quaternion rot, PVector sc, ShapeTemplate t, boolean addToEntityList) {
 
     super(p, rot, sc, addToEntityList);
@@ -230,6 +236,17 @@ public class RenderObject extends WorldObject {
     onTransformUpdate();
   }
 
+  public RenderObject(PVector p, Quaternion rot, PVector sc, PShape sh, boolean addToEntityList) {
+
+    super(p, rot, sc, addToEntityList);
+
+    pShape = sh;
+    pShape.scale(P3D_ONE_UNIT_SCALE * localScale.x);
+    wire = false;
+
+    onTransformUpdate();
+  }
+
   @Override
     public void update() {
     render(mainCamera);
@@ -237,39 +254,74 @@ public class RenderObject extends WorldObject {
 
   public void render(Camera c) {
 
-    // loop through all the shapes that make up this object and draw each one
-    for (Shape s : shapes) {
+    if (wire) {
+      
+      if (!testView) return;
+      
+      // loop through all the shapes that make up this object and draw each one
+      for (Shape s : shapes) {
 
-      s.setCameraVertices(c);
+        s.setCameraVertices(c);
 
-      stroke(255);
-      for (int i = 0; i <= s.template.lines.length - 2; i += 2) {
+        stroke(255);
+        for (int i = 0; i <= s.template.lines.length - 2; i += 2) {
 
-        // line alpha flicker magnitude
-        float minAlphaMagOffset = 0;
+          // line alpha flicker magnitude
+          float minAlphaMagOffset = 0;
 
-        // anti-seed our random with frameCount, so that even at the title screen, where we're re-seeding the random every frame to make sure the stars
-        // stay in the same spot, our letters will still flicker
-        randomSeed(frameCount * 10000 + i * 10000);
+          // anti-seed our random with frameCount, so that even at the title screen, where we're re-seeding the random every frame to make sure the stars
+          // stay in the same spot, our letters will still flicker
+          randomSeed(frameCount * 10000 + i * 10000);
 
-        minAlphaMagOffset = LETTER_LINE_RANDOM_ALPHA_MAGNITUDE;
+          minAlphaMagOffset = LETTER_LINE_RANDOM_ALPHA_MAGNITUDE;
 
-        float randomAlpha = random(255 - minAlphaMagOffset, 255);
-        stroke(255, 255, 255, randomAlpha);
+          float randomAlpha = random(255 - minAlphaMagOffset, 255);
+          stroke(255, 255, 255, randomAlpha);
 
 
-        drawLine(s.cameraVertices[s.template.lines[i]], s.cameraVertices[s.template.lines[i + 1]]);
+          drawLine(s.cameraVertices[s.template.lines[i]], s.cameraVertices[s.template.lines[i + 1]]);
+        }
+
+
+        if (DRAW_DEBUG_AXES) {
+          stroke(0, 0, 255);
+          drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, forward), c));
+          stroke(0, 255, 0);
+          drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, up), c));
+          stroke(255, 0, 0);
+          drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, right), c));
+        }
       }
+    } else {
+      pushMatrix();
 
+      if (testView) translate(width/2, height/2);
+      //translate(testCube.position.x * wire_to_real_units, -testCube.position.y * wire_to_real_units, testCube.position.z * wire_to_real_units);
+      //translate(-mainCamera.position.x * wire_to_real_units, -mainCamera.position.y * wire_to_real_units, (mainCamera.position.z + 10) * wire_to_real_units);
+      perspective(camFOV, float(width)/float(height), 0.1, 10000);
 
-      if (DRAW_DEBUG_AXES) {
-        stroke(0, 0, 255);
-        drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, forward), c));
-        stroke(0, 255, 0);
-        drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, up), c));
-        stroke(255, 0, 0);
-        drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, right), c));
-      }
+      // get rotation and translation
+      Quaternion finalRot;
+      if (testView) {
+        finalRot = mainCamera.rotation.getCopy().multiply(rotation);
+      } else  finalRot = rotation;
+
+      PVector finalTranslation = position;
+      
+      // perform final rotation
+      float[] m = new float[16];
+      finalRot.toMatrix(m);
+      applyMatrix(m[0], m[1], m[2], m[3],
+        m[4], m[5], m[6], m[7],
+        m[8], m[9], m[10], m[11],
+        m[12], m[13], m[14], m[15]);
+
+      // perform final translation
+      translate(finalTranslation.x * wire_to_real_units, -finalTranslation.y * wire_to_real_units, (-finalTranslation.z) * wire_to_real_units);
+      
+      // render the shape
+      shape(pShape);
+      popMatrix();
     }
   }
 
