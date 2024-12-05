@@ -438,7 +438,10 @@ public void onBulletHitPlayer() {
 
   playerModelObject.pShape = playerModelGameOver;
   
-
+  // tween camera back to starting position
+  Tween t = new Tween(mainCamera.localPosition.z, -camMaxDistance, 1.5).setOnUpdate((float val) -> {
+     mainCamera.setPosition(new PVector(0, 0, val));
+  }).setEaseMode(EaseStyle.EaseOutElastic);
 }
 
 /**

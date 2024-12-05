@@ -18,6 +18,8 @@ class Tween implements Updateable {
 
   LambdaEmpty onComplete = null;
   LambdaFloat onUpdate = null;
+  
+  EaseStyle easeMode;
 
   /**
    Timer constructor. Needs totallength only. Goes from 0 to 1 and calls
@@ -93,7 +95,9 @@ class Tween implements Updateable {
     float progress = 1 - constrain((triggerTime - time) / totalLength, 0, 1);
     
     // apply easing function
-    progress = easeOutElastic(progress);
+    if (easeMode == EaseStyle.EaseOutElastic) {
+     progress = easeOutElastic(progress); 
+    }
 
     // if we have an onUpdate function, map progress value using given from / to values and call the onUpdate function with it
     if (onUpdate != null) {
@@ -113,12 +117,14 @@ class Tween implements Updateable {
   
   public Tween setEaseMode(EaseStyle e) {
     
+    easeMode = e;
+    
     return this;
   }
 }
 
 enum EaseStyle {
  
-  EaseOutElastic
+  None, EaseOutElastic
   
 }
