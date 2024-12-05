@@ -77,7 +77,7 @@ RenderObject player;
 // testing:
 boolean qHeld, wHeld, eHeld, rHeld, aHeld, sHeld, dHeld, fHeld;
 
-boolean doController = false;
+boolean doController = true;
 
 void setup() {
   size(860, 860, P3D);
