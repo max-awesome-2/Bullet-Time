@@ -396,8 +396,12 @@ public class Bullet extends WorldObject {
 
     onTransformUpdate();
 
+    // apply partial scaling here because P3D models are a pain in the rear and you can only APPLY a scale factor, not set the scale of the model
+    PShape m = loadShape("bullet.obj");
+    m.scale(sc.x);
+
     // child model
-    RenderObject model = new RenderObject(zero, lookRotationArbitrary(WORLD_UP), new PVector(1, 1, 1), loadShape("bullet.obj"), true);
+    RenderObject model = new RenderObject(zero, lookRotationArbitrary(WORLD_UP), new PVector(1, 1, 1), m, true);
     model.setParent(this);
 
     // instantiate hitboxes here

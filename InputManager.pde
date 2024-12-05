@@ -30,7 +30,7 @@ public void checkControllerInput() {
 }
 
 public void serialMessageReceived(String msg) {
-  //println("received serial message: " + msg);
+  println("received serial message: " + msg);
 
   String[] split = msg.split("\t");
   try {
@@ -42,7 +42,7 @@ public void serialMessageReceived(String msg) {
         comp3 = Float.parseFloat(split[3]),
         comp4 = Float.parseFloat(split[4]);
 
-      Quaternion reading = new Quaternion(comp1, -comp2, -comp4, -comp3);
+      Quaternion reading = new Quaternion(comp1, comp3, -comp2, comp4);
 
       if (!gotFirstReading) {
         println("GOT FIRST READING");

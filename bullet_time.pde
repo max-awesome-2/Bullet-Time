@@ -44,9 +44,9 @@ public PVector zero = new PVector(0, 0, 0),
 Quaternion identity = new Quaternion(0, zero);
 
 // game logic constants
-public float BULLET_SPEED = 2;
-public float BULLET_SPAWN_DISTANCE = 15;
-public float BULLET_SCALE = 0.3;
+public float BULLET_SPEED = 5;
+public float BULLET_SPAWN_DISTANCE = 20;
+public float BULLET_SCALE = 0.5;
 
 
 // bullets must target a position at least this far away from the center of the player
@@ -55,7 +55,7 @@ public float BULLET_TARGET_MIN_DISTANCE = 1;
 public float BULLET_TARGET_MAX_DISTANCE = 4;
 
 // distance that a bullet must leave in order to be considered dodged
-public float BULLET_DODGE_DISTANCE = 5;
+public float BULLET_DODGE_DISTANCE = 10;
 
 // minimum time across which bullet spawns are staggered, plus the increase in stagger interval per bullet spawned
 float minStaggerTime = 0.35f;
@@ -111,7 +111,8 @@ boolean testView = true;
 
 float P3D_ONE_UNIT_SCALE = 50;
 
-RenderObject player;
+// player & player start rotation
+WorldObject player;
 
 // testing:
 boolean qHeld, wHeld, eHeld, rHeld, aHeld, sHeld, dHeld, fHeld;
@@ -146,7 +147,11 @@ void setup() {
   if (doController) setupController();
 
   // initialize player object & player hitboxes
-  player = new RenderObject(zero, identity, vectorScale(one, 0.5), loadShape("guy.obj"), true);
+  player = new WorldObject(zero, identity, one, true);
+  RenderObject playerModel = new RenderObject(zero, new Quaternion(90, WORLD_UP), vectorScale(one, 0.5), loadShape("guy.obj"), true);
+  playerModel.setParent(player);
+
+  player.setPosition(zero);
 
   float guyThickness = 0.55;
 
@@ -166,30 +171,17 @@ void setup() {
   BoundingPrism b7 = new BoundingPrism(new PVector(0, 2.45, 1.8), new Quaternion(53, WORLD_RIGHT), new PVector(guyThickness, 4.75, 1.4), true);
 
 
-  //println("A intersects: " + lineIntersectsSphere(new PVector(-5, -0.75, 0), new PVector(5, 0.-75, 0), 0, 0, 0, 1));
-
+  // test cube roughly showing bullet min distance radius
   RenderObject c = new RenderObject(new PVector(0, 0, 0), identity, vectorScale(one, BULLET_TARGET_MIN_DISTANCE * 2), cube, true);
-  //RenderObject o = new RenderObject(zero, lookRotationArbitrary(new PVector(0, 1, 0)), vectorScale(one, 0.5), loadShape("bullet.obj"), true);
-  //Bullet b = new Bullet(zero, WORLD_BACKWARD, one, true);
-  //  b = new Bullet(zero, new PVector(0, 1, -1), one, true);
-  //b = new Bullet(zero, WORLD_UP, one, true);
-  //    b = new Bullet(zero, new PVector(0, 1, 1), one, true);
 
-  //b = new Bullet(zero, WORLD_FORWARD, one, true);
+  b1.setParent(playerModel);
+  b2.setParent(playerModel);
+  b3.setParent(playerModel);
+  b4.setParent(playerModel);
+  b5.setParent(playerModel);
+  b6.setParent(playerModel);
+  b7.setParent(playerModel);
 
-
-  //println("identity: " + identity);
-  //println("right up: " +  lookRotation(WORLD_RIGHT, WORLD_UP));
-  b1.setParent(player);
-  b2.setParent(player);
-  b3.setParent(player);
-  b4.setParent(player);
-  b5.setParent(player);
-  b6.setParent(player);
-  b7.setParent(player);
-
-
-  //Bullet b = new Bullet(zero, WORLD_RIGHT, one, true);
 }
 
 float scale_units = 50;
@@ -217,8 +209,21 @@ void draw() {
 
   updateUpdateables();
 
-  // do game logic
-  
+  // do time scaling
+  if (gameState == 1) {
+    
+    // get nearest bullet
+    float smallestBulletDistance = 1000;
+    
+    for (Bullet b : bullets) {
+      float d = b.position.mag();
+      
+      if (d < smallestBulletDistance) 
+        smallestBulletDistance = d;
+    }
+    
+    timeScale = constrain(map(smallestBulletDistance, timeScaleMinDistance, timeScaleMaxDistance, minTimeScale, maxTimeScale), minTimeScale, maxTimeScale);
+  }
 }
 
 void keyPressed() {
@@ -264,7 +269,7 @@ void updateUpdateables() {
  Called on the start of a round - spawns all the bullets.
  */
 private void onRoundStart(int roundNum) {
-  
+
   // reset round variables
   roundComplete = false;
   bulletsDodged = 0;
@@ -327,9 +332,9 @@ private void spawnBullet() {
  Called when the player hits a bullet
  */
 public void onBulletHitPlayer() {
-  
+
   if (gameState != 1) return;
-  
+
   timeScale = 0;
   gameState = 2;
 
@@ -380,17 +385,18 @@ private void onRoundComplete() {
 }
 
 /**
-  Called from the Bullet class once a bullet is 'dodged' (i.e. after it leaves a certain radius of the player).
-*/
+ Called from the Bullet class once a bullet is 'dodged' (i.e. after it leaves a certain radius of the player).
+ */
 public void onBulletDodged() {
-  bulletsDodged++; 
-  
+  bulletsDodged++;
+
   if (bulletsDodged == bulletsAtFirstRound + (currentRound - 1) * bulletsIncreasePerRound && !roundComplete) {
-   roundComplete = true; 
-   
-   // once the last bullet is dodged, complete the round after a few seconds and start the next one
-   Tween t = new Tween(0, 1,timeTillRoundCompleteAfterLastBullet).setOnComplete(() -> {
-     onRoundComplete();
-   });
+    roundComplete = true;
+
+    // once the last bullet is dodged, complete the round after a few seconds and start the next one
+    Tween t = new Tween(0, 1, timeTillRoundCompleteAfterLastBullet).setOnComplete(() -> {
+      onRoundComplete();
+    }
+    );
   }
 }
