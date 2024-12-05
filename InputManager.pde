@@ -37,6 +37,6 @@ public void serialMessageReceived(String msg) {
       comp4 = Float.parseFloat(split[4]);
 
 
-    //testCube.setRotation(new Quaternion(comp1, comp2, comp4, -comp3));
+    player.setRotation(new Quaternion(comp1, comp2, comp4, -comp3));
   }
 }

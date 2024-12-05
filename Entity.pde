@@ -254,10 +254,10 @@ public class RenderObject extends WorldObject {
   }
 
   public void render(Camera c) {
-    
+
     // draw stored shape with P3D renderer
     if (pShape != null) {
-       pushMatrix();
+      pushMatrix();
 
       if (testView) translate(width/2, height/2);
 
@@ -296,14 +296,14 @@ public class RenderObject extends WorldObject {
         m[4], m[5], m[6], m[7],
         m[8], m[9], m[10], m[11],
         m[12], m[13], m[14], m[15]);
-      
+
 
 
       // render the shape
       shape(pShape);
       popMatrix();
     }
-    
+
     // draw shapes with wire renderer
     if (shapes.size() > 0) {
 
@@ -343,9 +343,7 @@ public class RenderObject extends WorldObject {
           drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, right), c));
         }
       }
-    
     }
-    
   }
 
   protected void updateShapes() {
@@ -372,7 +370,6 @@ public class RenderObject extends WorldObject {
   public void despawn() {
     updateables.remove(this);
   }
-
 }
 
 public class Bullet extends WorldObject {
@@ -389,23 +386,23 @@ public class Bullet extends WorldObject {
     onTransformUpdate();
 
     // child model
-    RenderObject model = new RenderObject(zero, lookRotationArbitrary(WORLD_UP), new PVector(1, 1, 1), loadShape("test_cube.obj"), true);
+    RenderObject model = new RenderObject(zero, lookRotationArbitrary(WORLD_UP), new PVector(1, 1, 1), loadShape("bullet.obj"), true);
     model.setParent(this);
 
-    RenderObject testbox = new RenderObject(zero, identity, new PVector(1, 1, 3), cube, true);
-    testbox.setParent(this);
-
     // instantiate hitboxes here
+    BoundingPrism bb1 = new BoundingPrism(new PVector(0, -0.13094, 0), identity, new PVector(0.783, 1.456, 0.783), false);
+    BoundingPrism bb2 = new BoundingPrism(new PVector(0, 0.75415, 0), identity, new PVector(0.635, 0.310, 0.635), false);
+    BoundingPrism bb3 = new BoundingPrism(new PVector(0, 1.0238, 0), identity, new PVector(0.429, 0.210, 0.429), false);
+
+    bb1.setParent(model);
+    bb2.setParent(model);
+    bb3.setParent(model);
   }
 
   @Override
     public void update() {
 
-    println("bullet pos: " + position);
-    println("bullet local pos: " + position);
     movePosition(vectorScale(travelDirection, timeScale * deltaTime * BULLET_SPEED));
-
-    // TODO: check collisions here
   }
 }
 
@@ -426,8 +423,8 @@ public class BoundingPrism extends RenderObject {
 
     isPlayer = isPl;
   }
-  
-   public BoundingPrism(PVector p, Quaternion rot, PVector sc, PShape shape, boolean isPl) {
+
+  public BoundingPrism(PVector p, Quaternion rot, PVector sc, PShape shape, boolean isPl) {
     super(p, rot, sc, cube, true);
     pShape = shape;
 

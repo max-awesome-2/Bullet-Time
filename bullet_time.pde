@@ -77,6 +77,8 @@ RenderObject player;
 // testing:
 boolean qHeld, wHeld, eHeld, rHeld, aHeld, sHeld, dHeld, fHeld;
 
+boolean doController = false;
+
 void setup() {
   size(860, 860, P3D);
 
@@ -97,8 +99,9 @@ void setup() {
   mainCamera.setParent(camParent);
 
   overlayCamera = new Camera(zero, identity, one, camFOV, false);
-
-  //setupController();
+  
+  // set up the controller
+  if (doController) setupController();
 
   // initialize player object & player hitboxes
   player = new RenderObject(zero, identity, vectorScale(one, 0.5), loadShape("guy.obj"), true);
@@ -144,21 +147,9 @@ void setup() {
   b6.setParent(player);
   b7.setParent(player);
 
-  // initialize bullet object and hitboxes
-  RenderObject bullet = new RenderObject(zero, identity, one, loadShape("bullet.obj"), true);
-  BoundingPrism bb1 = new BoundingPrism(new PVector(0, -0.13094, 0), identity, new PVector(0.783,1.456, 0.783), false);
-  BoundingPrism bb2 = new BoundingPrism(new PVector(0, 0.75415, 0), identity, new PVector(0.635, 0.310, 0.635), false);
-  BoundingPrism bb3 = new BoundingPrism(new PVector(0, 1.0238, 0), identity, new PVector(0.429, 0.210, 0.429), false);
   
-  bb1.setParent(bullet);
-  bb2.setParent(bullet);
-  bb3.setParent(bullet);
+  //Bullet b = new Bullet(zero, WORLD_RIGHT, one, true);
 
-
-
-
-  //testCube.rotateBy(WORLD_FORWARD, 45);
-  //mainCamera.rotateBy(WORLD_FORWARD, 45);
 }
 
 float scale_units = 50;
@@ -172,9 +163,8 @@ void draw() {
   // calculate delta time & increment time
   updateTime();
 
-
   // poll controller
-  //checkControllerInput();
+  if (doController) checkControllerInput();
 
 
   // init P3D camera
@@ -348,4 +338,5 @@ private void spawnBullet() {
  */
 public void onBulletHitPlayer() {
   println("BULLET HIT PLAYER!");
+  timeScale = 0;
 }
