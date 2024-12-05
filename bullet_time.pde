@@ -109,6 +109,9 @@ float currentBackgroundHue = random(255);
 PShape playerModel;
 PShape playerModelGameOver;
 
+// bullet models
+PShape bulletModel, bulletDodged, bulletHit;
+
 // title model
 PShape titleModel;
 
@@ -189,6 +192,13 @@ void setup() {
   playerModelGameOver.scale(P3D_ONE_UNIT_SCALE * 0.5);
   //playerModel.scale(0.5);
   //playerModelGameOver.scale(0.5);
+  
+  bulletModel = loadShape("bullet.obj");
+  bulletModel.scale(P3D_ONE_UNIT_SCALE * BULLET_SCALE);
+  bulletDodged= loadShape("dodged_bullet.obj");
+  bulletDodged.scale(P3D_ONE_UNIT_SCALE * BULLET_SCALE);
+  bulletHit = loadShape("hit_bullet.obj");
+  bulletHit.scale(P3D_ONE_UNIT_SCALE * BULLET_SCALE);
 
   // initialize player object & player hitboxes
   player = new WorldObject(zero, identity, one, true);

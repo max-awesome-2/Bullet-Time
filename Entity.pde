@@ -231,10 +231,6 @@ public class RenderObject extends WorldObject {
   public float hitSphereRadius = 0.5;
 
   public PShape pShape;
-  
-  // if true, this is a wireframe rendered shape and will be rendered with the wireframe renderer ONLY when testView is true
-  // if false, this is a P3D rendered shape
-  boolean wire = true;
 
   public RenderObject(PVector p, Quaternion rot, PVector sc, ShapeTemplate t, boolean addToEntityList) {
 
@@ -254,7 +250,13 @@ public class RenderObject extends WorldObject {
 
     pShape = sh;
     pShape.scale(P3D_ONE_UNIT_SCALE * localScale.x);
-    wire = false;
+
+    onTransformUpdate();
+  }
+
+  public RenderObject(PVector p, Quaternion rot, PVector sc, boolean addToEntityList) {
+
+    super(p, rot, sc, addToEntityList);
 
     onTransformUpdate();
   }
@@ -380,12 +382,14 @@ public class Bullet extends WorldObject {
 
   // direction in which this bullet travels
   private PVector travelDirection;
-  
+
   // variable to determine whether the player has successfully 'dodged' this bullet yet
   // passedIntoRadius is called when we pass within BULLET_TARGET_MAX_DISTANCE of the center
   // dodged is called once we leave BULLET_DODGE_RADIUS
   boolean passedIntoRadius = false;
   boolean dodged = false;
+
+  RenderObject model;
 
   public Bullet(PVector p, PVector target, PVector sc, boolean addToEntityList) {
 
@@ -396,13 +400,11 @@ public class Bullet extends WorldObject {
 
     onTransformUpdate();
 
-    // apply partial scaling here because P3D models are a pain in the rear and you can only APPLY a scale factor, not set the scale of the model
-    PShape m = loadShape("bullet.obj");
-    m.scale(sc.x);
-
     // child model
-    RenderObject model = new RenderObject(zero, lookRotationArbitrary(WORLD_UP), new PVector(1, 1, 1), m, true);
+    model = new RenderObject(zero, lookRotationArbitrary(WORLD_UP), new PVector(1, 1, 1), true);
     model.setParent(this);
+
+    model.pShape = bulletModel;
 
     // instantiate hitboxes here
     BoundingPrism bb1 = new BoundingPrism(new PVector(0, -0.13094, 0), identity, new PVector(0.783, 1.456, 0.783), false);
@@ -412,30 +414,41 @@ public class Bullet extends WorldObject {
     bb1.setParent(model);
     bb2.setParent(model);
     bb3.setParent(model);
-    
+    bb1.parentBullet = this;
+    bb2.parentBullet = this;
+    bb3.parentBullet = this;
+
     bullets.add(this);
+  }
+
+  /**
+   Sets the bullet to the given PShape.
+   */
+  public void setModel(PShape shape) {
+    model.pShape = shape;
   }
 
   @Override
     public void update() {
 
     movePosition(vectorScale(travelDirection, timeScale * deltaTime * BULLET_SPEED));
-    
+
     // get distance from center
     float d = position.mag();
-    
+
     if (!passedIntoRadius && d < BULLET_TARGET_MAX_DISTANCE) {
-     passedIntoRadius = true; 
+      passedIntoRadius = true;
     } else if (passedIntoRadius && !dodged && d > BULLET_DODGE_DISTANCE) {
-     dodged = true;
-     onBulletDodged();
+      dodged = true;
+      setModel(bulletDodged);
+      onBulletDodged();
     }
   }
 
   @Override
     public void despawn() {
     super.despawn();
-    
+
     // remove from the list of bullets
     bullets.remove(this);
   }
@@ -450,6 +463,9 @@ public class BoundingPrism extends RenderObject {
   // since our game only has two types of hitboxes - player and bullet hitboxes - we can just have a boolean instead of any kind of tag system
   // we can trigger a method in the main file when a collision between the two types is detected here
   public boolean isPlayer;
+  
+  // very inelegant way of having a reference to the parent bullet in order to change its model on collision
+  public Bullet parentBullet;
 
   public BoundingPrism(PVector p, Quaternion rot, PVector sc, boolean isPl) {
     super(p, rot, sc, cube, true);
@@ -476,6 +492,7 @@ public class BoundingPrism extends RenderObject {
       if (prism.isPlayer != isPlayer) {
         if (intersects(prism)) {
           onBulletHitPlayer();
+          if (parentBullet != null) parentBullet.setModel(bulletHit);
         }
       }
     }
