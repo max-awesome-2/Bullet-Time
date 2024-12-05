@@ -384,7 +384,7 @@ public class Bullet extends WorldObject {
     onTransformUpdate();
 
     // child model
-    RenderObject model = new RenderObject(zero, lookRotationArbitrary(WORLD_UP), new PVector(0.5, 1, 0.5), loadShape("bullet.obj"), true);
+    RenderObject model = new RenderObject(zero, lookRotationArbitrary(WORLD_UP), new PVector(1, 1, 1), loadShape("test_cube.obj"), true);
     model.setParent(this);
 
     RenderObject testbox = new RenderObject(zero, identity, new PVector(1, 1, 3), cube, true);

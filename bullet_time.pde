@@ -44,7 +44,7 @@ public PVector zero = new PVector(0, 0, 0),
 Quaternion identity = new Quaternion(0, zero);
 
 // game logic constants
-public float BULLET_SPEED = 1;
+public float BULLET_SPEED = 2;
 public float BULLET_SPAWN_DISTANCE = 15;
 
 // bullets must target a position at least this far away from the center of the player
@@ -96,10 +96,10 @@ void setup() {
   //RenderObject testCube2 = new RenderObject(new PVector(0, 0, 0), identity, one, loadShape("test_cube.obj"), true);
   
   //println("A intersects: " + lineIntersectsSphere(new PVector(-5, -0.75, 0), new PVector(5, 0.-75, 0), 0, 0, 0, 1));
-  onRoundStart(10);
+  onRoundStart(3);
   
   //RenderObject c = new RenderObject(new PVector(0, 5, 0), identity, new PVector(1, 1, 3), cube, true);
-  RenderObject o = new RenderObject(zero, lookRotationArbitrary(new PVector(0, 1, 0)), vectorScale(one, 0.5), loadShape("bullet.obj"), true);
+  //RenderObject o = new RenderObject(zero, lookRotationArbitrary(new PVector(0, 1, 0)), vectorScale(one, 0.5), loadShape("bullet.obj"), true);
   //Bullet b = new Bullet(zero, WORLD_BACKWARD, one, true);
   //  b = new Bullet(zero, new PVector(0, 1, -1), one, true);
   //b = new Bullet(zero, WORLD_UP, one, true);
