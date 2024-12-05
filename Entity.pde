@@ -391,7 +391,7 @@ public class Bullet extends WorldObject {
 
   RenderObject model;
 
-  public Bullet(PVector p, PVector target, PVector sc, boolean addToEntityList) {
+  public Bullet(PVector p, PVector target, PVector sc, boolean addToEntityList, boolean isNormalBullet) {
 
     super(p, identity, sc, addToEntityList);
 
@@ -418,7 +418,14 @@ public class Bullet extends WorldObject {
     bb2.parentBullet = this;
     bb3.parentBullet = this;
 
-    bullets.add(this);
+    if (addToEntityList) bullets.add(this);
+
+    if (!isNormalBullet) {
+      passedIntoRadius = true;
+      dodged = true;
+      onBulletDodged();
+      setPosition(new PVector(10000, 0, 0));
+    }
   }
 
   /**
@@ -463,7 +470,7 @@ public class BoundingPrism extends RenderObject {
   // since our game only has two types of hitboxes - player and bullet hitboxes - we can just have a boolean instead of any kind of tag system
   // we can trigger a method in the main file when a collision between the two types is detected here
   public boolean isPlayer;
-  
+
   // very inelegant way of having a reference to the parent bullet in order to change its model on collision
   public Bullet parentBullet;
 

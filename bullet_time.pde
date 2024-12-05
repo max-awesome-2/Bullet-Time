@@ -55,7 +55,7 @@ public float BULLET_TARGET_MIN_DISTANCE = 1;
 public float BULLET_TARGET_MAX_DISTANCE = 4;
 
 // distance that a bullet must leave in order to be considered dodged
-public float BULLET_DODGE_DISTANCE = 10;
+public float BULLET_DODGE_DISTANCE = 6;
 
 // minimum time across which bullet spawns are staggered, plus the increase in stagger interval per bullet spawned
 float minStaggerTime = 0.35f;
@@ -77,7 +77,10 @@ int gameState = 0;
 boolean startButtonPressed = false;
 
 int currentRound = 1;
-int bulletsAtFirstRound = 3;
+
+int disposeBullets = 5;
+// subtract disposeBullets from this to get the actual number
+int bulletsAtFirstRound = 3 + disposeBullets;
 int bulletsIncreasePerRound = 1;
 
 boolean roundComplete = false;
@@ -369,6 +372,8 @@ void updateUpdateables() {
   }
 }
 
+int bulletsSpawned = 0;
+
 /**
  Called on the start of a round - spawns all the bullets.
  */
@@ -395,12 +400,15 @@ private void onRoundStart(int roundNum) {
     spawnTimes.add(time + random(maxStaggerTime));
   }
 
+  bulletsSpawned = 0;
   Tween t = new Tween(0, 1, maxStaggerTime).setOnUpdate((float val) -> {
     spawnTimes.update();
 
     for (float f : spawnTimes) {
       if (time > f) {
-        spawnBullet();
+        boolean display = bulletsSpawned >= disposeBullets;
+        spawnBullet(display);
+        bulletsSpawned++;
         spawnTimes.remove(f);
       }
     }
@@ -408,7 +416,7 @@ private void onRoundStart(int roundNum) {
   );
 }
 
-private void spawnBullet() {
+private void spawnBullet(boolean display) {
   // get a random point on the edge of the sphere
   PVector randDirection = new PVector(random(1), random(1), random(1)).normalize();
 
@@ -430,7 +438,7 @@ private void spawnBullet() {
     validTarget = !lineIntersectsSphere(lineStart, lineEnd, 0, 0, 0, BULLET_TARGET_MIN_DISTANCE);
   }
 
-  Bullet b = new Bullet(spawnPos, targetPos, vectorScale(one, BULLET_SCALE), true);
+  Bullet b = new Bullet(spawnPos, targetPos, vectorScale(one, BULLET_SCALE), true, display);
 }
 
 /**
