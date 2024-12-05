@@ -169,4 +169,11 @@ public class Quaternion {
     matrix[9] = (float) (2.0f * ((y * z) + (x * w)));
     matrix[10] = (float) (1.0f - (2.0f * ((x * x) + (y * y))));
   }
+  
+  /**
+    Returns a quaternion q such that this * q = b.
+  */
+  public Quaternion getMultiplicativeInverse(Quaternion b) {
+    return b.getCopy().multiply(getConjugate());
+  }
 }

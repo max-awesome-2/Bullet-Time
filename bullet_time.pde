@@ -48,9 +48,9 @@ public float BULLET_SPEED = 2;
 public float BULLET_SPAWN_DISTANCE = 15;
 
 // bullets must target a position at least this far away from the center of the player
-public float BULLET_TARGET_MIN_DISTANCE = 0.5;
+public float BULLET_TARGET_MIN_DISTANCE = 1;
 // maximum targeting distance from player center
-public float BULLET_TARGET_MAX_DISTANCE = 1;
+public float BULLET_TARGET_MAX_DISTANCE = 4;
 
 ///// camera variables
 // the camera's field of view (90 degrees)
@@ -127,7 +127,7 @@ void setup() {
   //println("A intersects: " + lineIntersectsSphere(new PVector(-5, -0.75, 0), new PVector(5, 0.-75, 0), 0, 0, 0, 1));
   onRoundStart(3);
   
-  //RenderObject c = new RenderObject(new PVector(0, 5, 0), identity, new PVector(1, 1, 3), cube, true);
+  RenderObject c = new RenderObject(new PVector(0, 0, 0), identity, vectorScale(one, BULLET_TARGET_MIN_DISTANCE * 2), cube, true);
   //RenderObject o = new RenderObject(zero, lookRotationArbitrary(new PVector(0, 1, 0)), vectorScale(one, 0.5), loadShape("bullet.obj"), true);
   //Bullet b = new Bullet(zero, WORLD_BACKWARD, one, true);
   //  b = new Bullet(zero, new PVector(0, 1, -1), one, true);
