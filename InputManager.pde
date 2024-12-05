@@ -14,8 +14,8 @@ public void setupController() {
   // later, add automatic polling of each COM port in order to auto-detect controllers
 
   controllers = new GatedArrayList<SerialController>();
-
-  SerialController bill = new SerialController("Bill Bullet", "COM6");
+  
+  SerialController bill = new SerialController("Bill Bullet", "COM3");
 }
 
 public void checkControllerInput() {
@@ -30,7 +30,7 @@ public void checkControllerInput() {
 }
 
 public void serialMessageReceived(String msg) {
-  println("received serial message: " + msg);
+  //println("received serial message: " + msg);
 
   String[] split = msg.split("\t");
   try {

@@ -201,14 +201,7 @@ void setup() {
   Serial.println(F("Testing device connections..."));
   Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
 
-  // wait for ready
-  Serial.println(F("\nSend any character to begin DMP programming and demo: "));
-  while (serialBT.available() && serialBT.read())
-    ;  // empty buffer
-  while (!serialBT.available())
-    ;  // wait for data
-  while (serialBT.available() && serialBT.read())
-    ;  // empty buffer again
+  // just go for
 
   // load and configure the DMP
   Serial.println(F("Initializing DMP..."));

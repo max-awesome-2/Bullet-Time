@@ -40,9 +40,9 @@ class SerialController {
 
     if (portFound) {
       try {
-
+        
         port = new Serial(mainApplet, portName, 115200);
-
+                
         lastMessageTime = millis();
 
         initPort();
@@ -61,7 +61,7 @@ class SerialController {
 
   private void initPort() {
     // write the single character to trigger DMP init / start (from MPU6050_DMP6 example sketch)
-    port.write('r');
+    //port.write('r');
     // flush first port reading
     port.readStringUntil(10);
   }
@@ -73,7 +73,7 @@ class SerialController {
     if (millis() - lastMessageTime > 1000) {
       // resend single character to trigger DMP init/start
       // in case the MPU is halted/reset while applet is running
-      port.write('r');
+      //port.write('r');
       port.readStringUntil(10);
       lastMessageTime = millis();
     }
