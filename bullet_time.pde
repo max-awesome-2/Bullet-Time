@@ -102,12 +102,15 @@ float camRotateSpeed = 30;
 
 // variables to cycle the hue of the background over time
 float backgroundHueCycleSpeed = 5;
-float backgroundSaturation = 20;
+float backgroundSaturation = 150;
 float currentBackgroundHue = random(255);
 
 // player models
 PShape playerModel;
 PShape playerModelGameOver;
+
+// title model
+PShape titleModel;
 
 ////////////////
 
@@ -171,7 +174,10 @@ void setup() {
   // set up the controller
   if (doController) setupController();
   
-  // initialize textures
+  // initialize models
+  titleModel = loadShape("title.obj");
+  titleModel.scale(60);
+  
   playerModel = loadShape("bill_bullet.obj");
   playerModelGameOver = loadShape("bill_bullet_gameover.obj");
   playerModelGameOver.scale(P3D_ONE_UNIT_SCALE * 0.5);
@@ -222,7 +228,7 @@ void draw() {
 
   colorMode(HSB);
   currentBackgroundHue += backgroundHueCycleSpeed * deltaTime;
-  background(currentBackgroundHue, backgroundSaturation, 255);
+  background(currentBackgroundHue, backgroundSaturation, 180);
   colorMode(RGB);
 
   lights();
@@ -268,6 +274,21 @@ void draw() {
 
   // do camera rotation -  rotate half as fast during game over
   camParent.rotateBy(WORLD_UP, camRotateSpeed * (gameState == 2 ? 0.5 : 1) * deltaTime);
+  
+  // now, draw title / play message
+  if (gameState == 0) {
+    pushMatrix();
+    
+    lights();
+    
+   camera(width/2.0, height/2.0, (height/2.0) / tan(PI*30.0 / 180.0), width/2.0, height/2.0, 0, 0, 1, 0);
+   
+   translate(width/2, height/2);
+   translate(0, -300);
+   rotateX(-90);
+   shape(titleModel);
+   popMatrix();
+  }
 }
 
 void keyPressed() {
