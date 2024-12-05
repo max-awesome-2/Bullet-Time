@@ -87,6 +87,17 @@ float timeTillRoundCompleteAfterLastBullet = 5;
 int bulletsDodged = 0;
 /////////////////
 
+///////////////// camera control variables
+
+// 
+float camMaxDistance = 30;
+float camMinDistance = 10;
+
+// degrees per second at which the camera rotates during a round
+float camRotateSpeed = 30;
+
+/////////////////
+
 
 ///// camera variables
 // the camera's field of view (90 degrees)
@@ -107,7 +118,7 @@ GatedArrayList<Bullet> bullets;
 // list of bounding prisms - needs to be separate so that each prism can have a reference to all other prisms to check for collisions with during their update method
 GatedArrayList<BoundingPrism> boundingPrisms;
 
-boolean testView = true;
+boolean testView = false;
 
 float P3D_ONE_UNIT_SCALE = 50;
 
@@ -138,7 +149,7 @@ void setup() {
   camParent = new WorldObject(zero, identity, one, true);
 
   // initialize the main camera
-  mainCamera = new Camera(new PVector(0, 0, -10), identity, one, camFOV, true);
+  mainCamera = new Camera(new PVector(0, 0, -camMaxDistance), identity, one, camFOV, true);
   mainCamera.setParent(camParent);
 
   overlayCamera = new Camera(zero, identity, one, camFOV, false);
@@ -181,7 +192,6 @@ void setup() {
   b5.setParent(playerModel);
   b6.setParent(playerModel);
   b7.setParent(playerModel);
-
 }
 
 float scale_units = 50;
@@ -189,8 +199,9 @@ float wire_to_real_units = 50;
 
 void draw() {
 
-  background(100);
+  background(200);
   lights();
+  ambientLight(120, 120, 120);
 
   // calculate delta time & increment time
   updateTime();
@@ -223,7 +234,14 @@ void draw() {
     }
     
     timeScale = constrain(map(smallestBulletDistance, timeScaleMinDistance, timeScaleMaxDistance, minTimeScale, maxTimeScale), minTimeScale, maxTimeScale);
+    
+        // use closest bullet position to also determine camera zoom
+    mainCamera.setPosition(new PVector(0, 0, -constrain(map(smallestBulletDistance, timeScaleMinDistance, timeScaleMaxDistance, camMinDistance, camMaxDistance), camMinDistance, camMaxDistance)));
+    
+    camParent.rotateBy(WORLD_UP, camRotateSpeed * deltaTime);
   }
+  
+
 }
 
 void keyPressed() {
