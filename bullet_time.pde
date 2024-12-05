@@ -112,6 +112,9 @@ PShape playerModelGameOver;
 // title model
 PShape titleModel;
 
+// text font
+PFont font;
+
 ////////////////
 
 
@@ -145,7 +148,7 @@ RenderObject playerModelObject;
 // testing:
 boolean qHeld, wHeld, eHeld, rHeld, aHeld, sHeld, dHeld, fHeld;
 
-boolean doController = true;
+boolean doController = false;
 
 void setup() {
   size(860, 860, P3D);
@@ -173,11 +176,14 @@ void setup() {
 
   // set up the controller
   if (doController) setupController();
-  
+
+  // initialize font
+  font = createFont("Neuropol.otf", 32);
+
   // initialize models
   titleModel = loadShape("title.obj");
   titleModel.scale(60);
-  
+
   playerModel = loadShape("bill_bullet.obj");
   playerModelGameOver = loadShape("bill_bullet_gameover.obj");
   playerModelGameOver.scale(P3D_ONE_UNIT_SCALE * 0.5);
@@ -274,21 +280,44 @@ void draw() {
 
   // do camera rotation -  rotate half as fast during game over
   camParent.rotateBy(WORLD_UP, camRotateSpeed * (gameState == 2 ? 0.5 : 1) * deltaTime);
-  
+
   // now, draw title / play message
   if (gameState == 0) {
     pushMatrix();
-    
-    lights();
-    
-   camera(width/2.0, height/2.0, (height/2.0) / tan(PI*30.0 / 180.0), width/2.0, height/2.0, 0, 0, 1, 0);
-   
-   translate(width/2, height/2);
-   translate(0, -300);
-   rotateX(-90);
-   shape(titleModel);
-   popMatrix();
+
+    camera(width/2.0, height/2.0, (height/2.0) / tan(PI*30.0 / 180.0), width/2.0, height/2.0, 0, 0, 1, 0);
+
+    translate(width/2, height/2);
+    translate(0, -300);
+    rotateX(-90);
+    shape(titleModel);
+    popMatrix();
+
+    // draw play message
+    drawStartGameText("Press any key to begin.");
+    textAlign(CENTER, CENTER);
+  } else if (gameState == 1) {
+    drawRoundText("ROUND " + currentRound);
+  } else if (gameState == 2) {
+
+    drawRoundText("GAME OVER");
+
+    drawStartGameText("Press any key to return to title.");
   }
+}
+
+void drawStartGameText(String text) {
+
+  textFont(font, 60);
+
+  text(text, 50, 200);
+}
+
+void drawRoundText(String text) {
+
+  textFont(font, 120);
+
+  text(text, 50, -300);
 }
 
 void keyPressed() {
@@ -408,6 +437,8 @@ public void onBulletHitPlayer() {
   startButtonPressed = false;
 
   playerModelObject.pShape = playerModelGameOver;
+  
+
 }
 
 /**
