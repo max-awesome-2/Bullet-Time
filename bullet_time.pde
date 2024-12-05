@@ -89,7 +89,7 @@ int bulletsDodged = 0;
 
 ///////////////// camera control variables
 
-// 
+//
 float camMaxDistance = 30;
 float camMinDistance = 10;
 
@@ -201,7 +201,7 @@ void draw() {
 
   background(200);
   lights();
-  ambientLight(120, 120, 120);
+  ambientLight(150, 150, 150);
 
   // calculate delta time & increment time
   updateTime();
@@ -222,26 +222,25 @@ void draw() {
 
   // do time scaling
   if (gameState == 1) {
-    
+
     // get nearest bullet
     float smallestBulletDistance = 1000;
-    
+
     for (Bullet b : bullets) {
       float d = b.position.mag();
-      
-      if (d < smallestBulletDistance) 
+
+      if (d < smallestBulletDistance)
         smallestBulletDistance = d;
     }
-    
+
     timeScale = constrain(map(smallestBulletDistance, timeScaleMinDistance, timeScaleMaxDistance, minTimeScale, maxTimeScale), minTimeScale, maxTimeScale);
-    
-        // use closest bullet position to also determine camera zoom
+
+    // use closest bullet position to also determine camera zoom
     mainCamera.setPosition(new PVector(0, 0, -constrain(map(smallestBulletDistance, timeScaleMinDistance, timeScaleMaxDistance, camMinDistance, camMaxDistance), camMinDistance, camMaxDistance)));
-    
-    camParent.rotateBy(WORLD_UP, camRotateSpeed * deltaTime);
   }
   
-
+  // do camera rotation -  rotate half as fast during game over
+  camParent.rotateBy(WORLD_UP, camRotateSpeed * (gameState == 2 ? 0.5 : 1) * deltaTime);
 }
 
 void keyPressed() {
@@ -291,6 +290,7 @@ private void onRoundStart(int roundNum) {
   // reset round variables
   roundComplete = false;
   bulletsDodged = 0;
+  resetCamera();
 
   int bulletCount = bulletsAtFirstRound + bulletsIncreasePerRound * (roundNum - 1);
 
@@ -372,6 +372,7 @@ private void backToTitle() {
   // reset variables
   timeScale = 1;
   currentRound = 1;
+  resetCamera();
 
   gameState = 0;
   startButtonPressed = false;
@@ -417,4 +418,11 @@ public void onBulletDodged() {
     }
     );
   }
+}
+
+/**
+ Resets the camera's position to the maximum distance.
+ */
+private void resetCamera() {
+  mainCamera.setPosition(new PVector(0, 0, -camMaxDistance));
 }
