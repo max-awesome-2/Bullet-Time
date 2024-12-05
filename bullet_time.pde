@@ -46,11 +46,47 @@ Quaternion identity = new Quaternion(0, zero);
 // game logic constants
 public float BULLET_SPEED = 2;
 public float BULLET_SPAWN_DISTANCE = 15;
+public float BULLET_SCALE = 0.3;
+
 
 // bullets must target a position at least this far away from the center of the player
 public float BULLET_TARGET_MIN_DISTANCE = 1;
 // maximum targeting distance from player center
 public float BULLET_TARGET_MAX_DISTANCE = 4;
+
+// distance that a bullet must leave in order to be considered dodged
+public float BULLET_DODGE_DISTANCE = 5;
+
+// minimum time across which bullet spawns are staggered, plus the increase in stagger interval per bullet spawned
+float minStaggerTime = 0.35f;
+float staggerTimeIncreasePerBullet = 0.035f;
+
+///////////////// time scaling variables
+// minimum and maximum time scales
+float maxTimeScale = 1, minTimeScale = 0.25;
+
+// the min and max distance of the closest bullet between which timescale starts to scale
+float timeScaleMinDistance = 4;
+float timeScaleMaxDistance = 10;
+/////////////////
+
+///////////////// game state variables
+
+// game state: 0 = title screen, 1 = main game, 2 = game over
+int gameState = 0;
+boolean startButtonPressed = false;
+
+int currentRound = 1;
+int bulletsAtFirstRound = 3;
+int bulletsIncreasePerRound = 1;
+
+boolean roundComplete = false;
+float timeTillRoundCompleteAfterLastBullet = 5;
+
+// counted to determine when a round is complete (round completes once all bullets are successfully dodged)
+int bulletsDodged = 0;
+/////////////////
+
 
 ///// camera variables
 // the camera's field of view (90 degrees)
@@ -64,6 +100,9 @@ public WorldObject camParent;
 
 // list of updateables that will be iterated over each iteration of the game loop
 GatedArrayList<Updateable> updateables;
+
+// list of all spawned bullets
+GatedArrayList<Bullet> bullets;
 
 // list of bounding prisms - needs to be separate so that each prism can have a reference to all other prisms to check for collisions with during their update method
 GatedArrayList<BoundingPrism> boundingPrisms;
@@ -88,6 +127,9 @@ void setup() {
   // initialize bounding prisms list
   boundingPrisms = new GatedArrayList<BoundingPrism>();
 
+  // initialize bullets list
+  bullets = new GatedArrayList<Bullet>();
+
   // initialize millis value
   lastMillis = millis();
 
@@ -99,7 +141,7 @@ void setup() {
   mainCamera.setParent(camParent);
 
   overlayCamera = new Camera(zero, identity, one, camFOV, false);
-  
+
   // set up the controller
   if (doController) setupController();
 
@@ -118,15 +160,14 @@ void setup() {
   // arms
   BoundingPrism b4 = new BoundingPrism(new PVector(0, -2.95, -2.2), new Quaternion(57, WORLD_RIGHT), new PVector(guyThickness, 3.5, 1.15), true);
   BoundingPrism b5 = new BoundingPrism(new PVector(0, -2.95, 2.2), new Quaternion(-57, WORLD_RIGHT), new PVector(guyThickness, 3.5, 1.15), true);
-  
+
   // legs
   BoundingPrism b6 = new BoundingPrism(new PVector(0, 2.45, -1.8), new Quaternion(-53, WORLD_RIGHT), new PVector(guyThickness, 4.75, 1.4), true);
-    BoundingPrism b7 = new BoundingPrism(new PVector(0, 2.45, 1.8), new Quaternion(53, WORLD_RIGHT), new PVector(guyThickness, 4.75, 1.4), true);
+  BoundingPrism b7 = new BoundingPrism(new PVector(0, 2.45, 1.8), new Quaternion(53, WORLD_RIGHT), new PVector(guyThickness, 4.75, 1.4), true);
 
-  
+
   //println("A intersects: " + lineIntersectsSphere(new PVector(-5, -0.75, 0), new PVector(5, 0.-75, 0), 0, 0, 0, 1));
-  onRoundStart(3);
-  
+
   RenderObject c = new RenderObject(new PVector(0, 0, 0), identity, vectorScale(one, BULLET_TARGET_MIN_DISTANCE * 2), cube, true);
   //RenderObject o = new RenderObject(zero, lookRotationArbitrary(new PVector(0, 1, 0)), vectorScale(one, 0.5), loadShape("bullet.obj"), true);
   //Bullet b = new Bullet(zero, WORLD_BACKWARD, one, true);
@@ -136,7 +177,7 @@ void setup() {
 
   //b = new Bullet(zero, WORLD_FORWARD, one, true);
 
-  
+
   //println("identity: " + identity);
   //println("right up: " +  lookRotation(WORLD_RIGHT, WORLD_UP));
   b1.setParent(player);
@@ -147,9 +188,8 @@ void setup() {
   b6.setParent(player);
   b7.setParent(player);
 
-  
-  //Bullet b = new Bullet(zero, WORLD_RIGHT, one, true);
 
+  //Bullet b = new Bullet(zero, WORLD_RIGHT, one, true);
 }
 
 float scale_units = 50;
@@ -177,106 +217,25 @@ void draw() {
 
   updateUpdateables();
 
-  //if (testView) {
-  if (qHeld) {
-    camParent.rotateByLocal(WORLD_UP, 60 * deltaTime);
-    //cX += deltaTime * 50;
-  }
-  if (wHeld) {
-    camParent.rotateByLocal(WORLD_UP, -60 * deltaTime);
-    //cX -= deltaTime * 50;
-  }
-  //}
-
-  if (eHeld) {
-
-    //camParent.rotateByLocal(WORLD_RIGHT, 30 * deltaTime);
-    player.movePosition(new PVector(0, deltaTime * 5, 0));
-    //cY += deltaTime * 50;
-    //testCube1.movePosition(new PVector(deltaTime * 5, 0, 0));
-  }
-  if (rHeld) {
-
-    //camParent.rotateByLocal(WORLD_RIGHT, -30 * deltaTime);
-    player.movePosition(new PVector(0, deltaTime * -5, 0));
-    //cY -= deltaTime * 50;
-    //testCube1.movePosition(new PVector(deltaTime * -5, 0, 0));
-  }
-
-  if (aHeld) {
-    //camParent.rotateBy(WORLD_FORWARD, 30 * deltaTime);
-    //cZ += deltaTime * 50;
-    //testCube1.rotateBy(WORLD_FORWARD, 30 * deltaTime);
-  }
-  if (sHeld) {
-    //camParent.rotateBy(WORLD_FORWARD, -30 * deltaTime);
-    //cZ -= deltaTime * 50;
-    //testCube1.rotateBy(WORLD_FORWARD, -30 * deltaTime);
-  }
-
-  if (dHeld) {
-    //testCube.rotateBy(WORLD_UP, 30 * deltaTime);
-    //testCube1.movePosition(new PVector(0, deltaTime * 5, 0));
-  }
-  if (fHeld) {
-    //testCube.rotateBy(WORLD_UP, -30 * deltaTime);
-    onRoundStart(1);
-    //testCube1.movePosition(new PVector(0, deltaTime * -5, 0));
-  }
+  // do game logic
+  
 }
 
 void keyPressed() {
-  if (key == 'q') {
-    qHeld = true;
+  if (gameState == 0 && !startButtonPressed) {
+    startButtonPressed = true;
+
+    onStartGame();
   }
-  if (key == 'w') {
-    wHeld = true;
-  }
-  if (key == 'e') {
-    eHeld = true;
-  }
-  if (key == 'r') {
-    rHeld = true;
-  }
-  if (key == 'a') {
-    aHeld = true;
-  }
-  if (key == 's') {
-    sHeld = true;
-  }
-  if (key == 'd') {
-    dHeld = true;
-  }
-  if (key == 'f') {
-    fHeld = true;
+
+  if (gameState == 2 && !startButtonPressed) {
+    startButtonPressed = true;
+
+    backToTitle();
   }
 }
 
 void keyReleased() {
-  if (key == 'q') {
-    qHeld = false;
-  }
-  if (key == 'w') {
-    wHeld = false;
-  }
-  if (key == 'e') {
-    eHeld = false;
-  }
-  if (key == 'r') {
-    rHeld = false;
-  }
-  if (key == 'a') {
-    aHeld = false;
-  }
-  if (key == 's') {
-    sHeld = false;
-  }
-  if (key == 'd') {
-    dHeld = false;
-  }
-  if (key == 'f') {
-    fHeld = false;
-  }
 }
 
 void updateTime() {
@@ -293,6 +252,7 @@ void updateUpdateables() {
   // update gated lists (do queued adds / removals)
   updateables.update();
   boundingPrisms.update();
+  bullets.update();
 
   // update all updateable objects
   for (Updateable u : updateables) {
@@ -300,12 +260,42 @@ void updateUpdateables() {
   }
 }
 
+/**
+ Called on the start of a round - spawns all the bullets.
+ */
 private void onRoundStart(int roundNum) {
+  
+  // reset round variables
+  roundComplete = false;
+  bulletsDodged = 0;
+
+  int bulletCount = bulletsAtFirstRound + bulletsIncreasePerRound * (roundNum - 1);
+
+  // stagger the bullet spawn times using a time list
+  // bullets are spawned during a tween which continually checks times - whenever a set spawn time is passed, spawn a bullet
+  GatedArrayList<Float> spawnTimes = new GatedArrayList<Float>();
+
+  // calculate max stagger time
+  float maxStaggerTime = minStaggerTime + staggerTimeIncreasePerBullet * bulletCount;
 
   // spawn bullets equal to the round number
-  for (int i = 0; i < roundNum; i++) {
-    spawnBullet();
+  for (int i = 0; i < bulletCount; i++) {
+
+    // create a random spawn time between current time and current time + maxStaggerTime
+    spawnTimes.add(time + random(maxStaggerTime));
   }
+
+  Tween t = new Tween(0, 1, maxStaggerTime).setOnUpdate((float val) -> {
+    spawnTimes.update();
+
+    for (float f : spawnTimes) {
+      if (time > f) {
+        spawnBullet();
+        spawnTimes.remove(f);
+      }
+    }
+  }
+  );
 }
 
 private void spawnBullet() {
@@ -323,20 +313,84 @@ private void spawnBullet() {
     targetPos = vectorScale(randDirection, random(BULLET_TARGET_MIN_DISTANCE, BULLET_TARGET_MAX_DISTANCE));
 
     PVector direction = vectorSubtract(targetPos, spawnPos).normalize();
-   
+
     // generate a line start and end point we can use the algorithm with
     PVector lineStart = vectorAdd(targetPos, vectorScale(direction, -BULLET_SPAWN_DISTANCE)), lineEnd = vectorAdd(targetPos, vectorScale(direction, BULLET_SPAWN_DISTANCE));
 
     validTarget = !lineIntersectsSphere(lineStart, lineEnd, 0, 0, 0, BULLET_TARGET_MIN_DISTANCE);
   }
-  
-  Bullet b = new Bullet(spawnPos, targetPos, one, true);
+
+  Bullet b = new Bullet(spawnPos, targetPos, vectorScale(one, BULLET_SCALE), true);
 }
 
 /**
  Called when the player hits a bullet
  */
 public void onBulletHitPlayer() {
-  println("BULLET HIT PLAYER!");
+  
+  if (gameState != 1) return;
+  
   timeScale = 0;
+  gameState = 2;
+
+  startButtonPressed = false;
+}
+
+/**
+ Go back to the title screen, resetting game variables so that it can be replayed
+ */
+private void backToTitle() {
+
+  // destroy all existing bullets
+  for (Bullet b : bullets) {
+    b.despawn();
+  }
+
+  // reset variables
+  timeScale = 1;
+  currentRound = 1;
+
+  gameState = 0;
+  startButtonPressed = false;
+
+  // TODO: reset camera position and rotation
+}
+
+/**
+ Called on the start of the game
+ */
+private void onStartGame() {
+  gameState = 1;
+
+  // start first round
+  onRoundStart(currentRound);
+}
+
+private void onRoundComplete() {
+  // destroy all existing bullets
+  for (Bullet b : bullets) {
+    b.despawn();
+  }
+
+  // increment the round counter
+  currentRound++;
+
+  // start the next round
+  onRoundStart(currentRound);
+}
+
+/**
+  Called from the Bullet class once a bullet is 'dodged' (i.e. after it leaves a certain radius of the player).
+*/
+public void onBulletDodged() {
+  bulletsDodged++; 
+  
+  if (bulletsDodged == bulletsAtFirstRound + (currentRound - 1) * bulletsIncreasePerRound && !roundComplete) {
+   roundComplete = true; 
+   
+   // once the last bullet is dodged, complete the round after a few seconds and start the next one
+   Tween t = new Tween(0, 1,timeTillRoundCompleteAfterLastBullet).setOnComplete(() -> {
+     onRoundComplete();
+   });
+  }
 }

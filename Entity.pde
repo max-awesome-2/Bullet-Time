@@ -196,6 +196,17 @@ public class WorldObject implements Updateable {
   public void removeChild(WorldObject c) {
     children.remove(c);
   }
+
+  /**
+   Removes this object and its children from the main updateables list, effectively despawning it.
+   */
+  public void despawn() {
+    updateables.remove(this);
+
+    for (WorldObject w : children) {
+      w.despawn();
+    }
+  }
 }
 /*
 public class Camera extends WorldObject {
@@ -363,18 +374,18 @@ public class RenderObject extends WorldObject {
 
     updateShapes();
   }
-
-  /**
-   Removes this object from the main updateables list, effectively despawning it.
-   */
-  public void despawn() {
-    updateables.remove(this);
-  }
 }
 
 public class Bullet extends WorldObject {
 
+  // direction in which this bullet travels
   private PVector travelDirection;
+  
+  // variable to determine whether the player has successfully 'dodged' this bullet yet
+  // passedIntoRadius is called when we pass within BULLET_TARGET_MAX_DISTANCE of the center
+  // dodged is called once we leave BULLET_DODGE_RADIUS
+  boolean passedIntoRadius = false;
+  boolean dodged = false;
 
   public Bullet(PVector p, PVector target, PVector sc, boolean addToEntityList) {
 
@@ -397,12 +408,32 @@ public class Bullet extends WorldObject {
     bb1.setParent(model);
     bb2.setParent(model);
     bb3.setParent(model);
+    
+    bullets.add(this);
   }
 
   @Override
     public void update() {
 
     movePosition(vectorScale(travelDirection, timeScale * deltaTime * BULLET_SPEED));
+    
+    // get distance from center
+    float d = position.mag();
+    
+    if (!passedIntoRadius && d < BULLET_TARGET_MAX_DISTANCE) {
+     passedIntoRadius = true; 
+    } else if (passedIntoRadius && !dodged && d > BULLET_DODGE_DISTANCE) {
+     dodged = true;
+     onBulletDodged();
+    }
+  }
+
+  @Override
+    public void despawn() {
+    super.despawn();
+    
+    // remove from the list of bullets
+    bullets.remove(this);
   }
 }
 

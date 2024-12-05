@@ -15,7 +15,7 @@ public void setupController() {
 
   controllers = new GatedArrayList<SerialController>();
 
-  SerialController hand = new SerialController("Bill Bullet", "COM6");
+  SerialController bill = new SerialController("Bill Bullet", "COM6");
 }
 
 public void checkControllerInput() {
@@ -54,7 +54,7 @@ public void serialMessageReceived(String msg) {
         multInverse = reading.getMultiplicativeInverse(identity);
       }
 
-      player.setRotation(reading.multiply(multInverse));
+      if (gameState != 2) player.setRotation(reading.multiply(multInverse));
     }
   }
   catch (Exception e) {
