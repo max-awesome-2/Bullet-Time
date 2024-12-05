@@ -255,9 +255,9 @@ public class RenderObject extends WorldObject {
   public void render(Camera c) {
 
     if (wire) {
-      
+
       if (!testView) return;
-      
+
       // loop through all the shapes that make up this object and draw each one
       for (Shape s : shapes) {
 
@@ -296,6 +296,8 @@ public class RenderObject extends WorldObject {
       pushMatrix();
 
       if (testView) translate(width/2, height/2);
+
+
       //translate(testCube.position.x * wire_to_real_units, -testCube.position.y * wire_to_real_units, testCube.position.z * wire_to_real_units);
       //translate(-mainCamera.position.x * wire_to_real_units, -mainCamera.position.y * wire_to_real_units, (mainCamera.position.z + 10) * wire_to_real_units);
       perspective(camFOV, float(width)/float(height), 0.1, 10000);
@@ -307,18 +309,32 @@ public class RenderObject extends WorldObject {
       } else  finalRot = rotation;
 
       PVector finalTranslation = position;
-      
-      // perform final rotation
+
       float[] m = new float[16];
-      finalRot.toMatrix(m);
+
+      if (testView) {
+        // perform camera rotation
+        mainCamera.rotation.toMatrix(m);
+        applyMatrix(m[0], m[1], m[2], m[3],
+          m[4], m[5], m[6], m[7],
+          m[8], m[9], m[10], m[11],
+          m[12], m[13], m[14], m[15]);
+      }
+
+
+      // perform final translation
+      translate(finalTranslation.x * wire_to_real_units, finalTranslation.y * wire_to_real_units, (-finalTranslation.z) * wire_to_real_units);
+
+      Quaternion qAltered = new Quaternion(-rotation.w, rotation.x, rotation.y, -rotation.z);
+      // apply object rotation
+      qAltered.toMatrix(m);
       applyMatrix(m[0], m[1], m[2], m[3],
         m[4], m[5], m[6], m[7],
         m[8], m[9], m[10], m[11],
         m[12], m[13], m[14], m[15]);
-
-      // perform final translation
-      translate(finalTranslation.x * wire_to_real_units, -finalTranslation.y * wire_to_real_units, (-finalTranslation.z) * wire_to_real_units);
       
+
+
       // render the shape
       shape(pShape);
       popMatrix();
@@ -354,27 +370,36 @@ public class RenderObject extends WorldObject {
   }
 }
 
-public class Bullet extends RenderObject {
-  
+public class Bullet extends WorldObject {
+
   private PVector travelDirection;
-  
+
   public Bullet(PVector p, PVector target, PVector sc, boolean addToEntityList) {
-    
-    super(p, identity, sc, loadShape("bullet.obj"), addToEntityList);
-    
+
+    super(p, identity, sc, addToEntityList);
+
     travelDirection = (vectorSubtract(target, p)).normalize();
     setRotation(lookRotation(travelDirection, getArbitraryPerpendicular(travelDirection)));
 
     onTransformUpdate();
+
+    // child model
+    RenderObject model = new RenderObject(zero, lookRotationArbitrary(WORLD_UP), new PVector(0.5, 1, 0.5), loadShape("bullet.obj"), true);
+    model.setParent(this);
+
+    RenderObject testbox = new RenderObject(zero, identity, new PVector(1, 1, 3), cube, true);
+    testbox.setParent(this);
+
+    // instantiate hitboxes here
   }
 
   @Override
     public void update() {
-      
+
+    println("bullet pos: " + position);
+    println("bullet local pos: " + position);
     movePosition(vectorScale(travelDirection, timeScale * deltaTime * BULLET_SPEED));
-    
+
     // TODO: check collisions here
-      
-    render(mainCamera);
   }
 }

@@ -225,3 +225,7 @@ public PVector getArbitraryPerpendicular(PVector a) {
   return b.cross(a);
   
 }
+
+public Quaternion lookRotationArbitrary(PVector forward) {
+ return lookRotation(forward, getArbitraryPerpendicular(forward)); 
+}
