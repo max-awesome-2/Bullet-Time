@@ -231,7 +231,7 @@ public class RenderObject extends WorldObject {
   public float hitSphereRadius = 0.5;
 
   public PShape pShape;
-
+  
   // if true, this is a wireframe rendered shape and will be rendered with the wireframe renderer ONLY when testView is true
   // if false, this is a P3D rendered shape
   boolean wire = true;

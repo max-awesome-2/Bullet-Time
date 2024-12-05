@@ -98,6 +98,19 @@ float camRotateSpeed = 30;
 
 /////////////////
 
+//////////////// visuals variables
+
+// variables to cycle the hue of the background over time
+float backgroundHueCycleSpeed = 5;
+float backgroundSaturation = 20;
+float currentBackgroundHue = random(255);
+
+// player models
+PShape playerModel;
+PShape playerModelGameOver;
+
+////////////////
+
 
 ///// camera variables
 // the camera's field of view (90 degrees)
@@ -122,8 +135,9 @@ boolean testView = false;
 
 float P3D_ONE_UNIT_SCALE = 50;
 
-// player & player start rotation
+// player object & model
 WorldObject player;
+RenderObject playerModelObject;
 
 // testing:
 boolean qHeld, wHeld, eHeld, rHeld, aHeld, sHeld, dHeld, fHeld;
@@ -156,11 +170,18 @@ void setup() {
 
   // set up the controller
   if (doController) setupController();
+  
+  // initialize textures
+  playerModel = loadShape("bill_bullet.obj");
+  playerModelGameOver = loadShape("bill_bullet_gameover.obj");
+  playerModelGameOver.scale(P3D_ONE_UNIT_SCALE * 0.5);
+  //playerModel.scale(0.5);
+  //playerModelGameOver.scale(0.5);
 
   // initialize player object & player hitboxes
   player = new WorldObject(zero, identity, one, true);
-  RenderObject playerModel = new RenderObject(zero, new Quaternion(90, WORLD_UP), vectorScale(one, 0.5), loadShape("guy.obj"), true);
-  playerModel.setParent(player);
+  playerModelObject = new RenderObject(zero, new Quaternion(90, WORLD_UP), vectorScale(one, 0.5), playerModel, true);
+  playerModelObject.setParent(player);
 
   player.setPosition(zero);
 
@@ -185,13 +206,13 @@ void setup() {
   // test cube roughly showing bullet min distance radius
   RenderObject c = new RenderObject(new PVector(0, 0, 0), identity, vectorScale(one, BULLET_TARGET_MIN_DISTANCE * 2), cube, true);
 
-  b1.setParent(playerModel);
-  b2.setParent(playerModel);
-  b3.setParent(playerModel);
-  b4.setParent(playerModel);
-  b5.setParent(playerModel);
-  b6.setParent(playerModel);
-  b7.setParent(playerModel);
+  b1.setParent(playerModelObject);
+  b2.setParent(playerModelObject);
+  b3.setParent(playerModelObject);
+  b4.setParent(playerModelObject);
+  b5.setParent(playerModelObject);
+  b6.setParent(playerModelObject);
+  b7.setParent(playerModelObject);
 }
 
 float scale_units = 50;
@@ -199,9 +220,15 @@ float wire_to_real_units = 50;
 
 void draw() {
 
-  background(200);
+  colorMode(HSB);
+  currentBackgroundHue += backgroundHueCycleSpeed * deltaTime;
+  background(currentBackgroundHue, backgroundSaturation, 255);
+  colorMode(RGB);
+
   lights();
   ambientLight(150, 150, 150);
+  directionalLight(200, 200, 200, -0.5, -0.5, -0.5);
+  //directionalLight(100, 100, 100, 0.35, 0.75, 0.4);
 
   // calculate delta time & increment time
   updateTime();
@@ -238,7 +265,7 @@ void draw() {
     // use closest bullet position to also determine camera zoom
     mainCamera.setPosition(new PVector(0, 0, -constrain(map(smallestBulletDistance, timeScaleMinDistance, timeScaleMaxDistance, camMinDistance, camMaxDistance), camMinDistance, camMaxDistance)));
   }
-  
+
   // do camera rotation -  rotate half as fast during game over
   camParent.rotateBy(WORLD_UP, camRotateSpeed * (gameState == 2 ? 0.5 : 1) * deltaTime);
 }
@@ -351,12 +378,15 @@ private void spawnBullet() {
  */
 public void onBulletHitPlayer() {
 
+  // switch to game over state
   if (gameState != 1) return;
 
   timeScale = 0;
   gameState = 2;
 
   startButtonPressed = false;
+
+  playerModelObject.pShape = playerModelGameOver;
 }
 
 /**
@@ -373,6 +403,8 @@ private void backToTitle() {
   timeScale = 1;
   currentRound = 1;
   resetCamera();
+
+  playerModelObject.pShape = playerModel;
 
   gameState = 0;
   startButtonPressed = false;
