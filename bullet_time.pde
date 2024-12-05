@@ -63,11 +63,16 @@ public Camera mainCamera, overlayCamera;
 public WorldObject camParent;
 
 // list of updateables that will be iterated over each iteration of the game loop
-GatedArrayList<Updateable> updateables, p3dObjects;
+GatedArrayList<Updateable> updateables;
+
+// list of bounding prisms - needs to be separate so that each prism can have a reference to all other prisms to check for collisions with during their update method
+GatedArrayList<BoundingPrism> boundingPrisms;
 
 boolean testView = true;
 
 float P3D_ONE_UNIT_SCALE = 50;
+
+RenderObject player;
 
 // testing:
 boolean qHeld, wHeld, eHeld, rHeld, aHeld, sHeld, dHeld, fHeld;
@@ -77,6 +82,9 @@ void setup() {
 
   // initialize updateables list
   updateables = new GatedArrayList<Updateable>();
+
+  // initialize bounding prisms list
+  boundingPrisms = new GatedArrayList<BoundingPrism>();
 
   // initialize millis value
   lastMillis = millis();
@@ -92,8 +100,26 @@ void setup() {
 
   //setupController();
 
-  // shape test
-  //RenderObject testCube2 = new RenderObject(new PVector(0, 0, 0), identity, one, loadShape("test_cube.obj"), true);
+  // initialize player object & player hitboxes
+  player = new RenderObject(zero, identity, vectorScale(one, 0.5), loadShape("guy.obj"), true);
+
+  float guyThickness = 0.55;
+
+  // body
+  BoundingPrism b1 = new BoundingPrism(new PVector(0, -1, 0), identity, new PVector(guyThickness, 4.3, 2), true);
+
+  // head
+  BoundingPrism b2 = new BoundingPrism(new PVector(0, -4, 0), identity, new PVector(guyThickness, 1, 3), true);
+  BoundingPrism b3 = new BoundingPrism(new PVector(0, -5, 0), identity, new PVector(guyThickness, 1, 2.25), true);
+
+  // arms
+  BoundingPrism b4 = new BoundingPrism(new PVector(0, -2.95, -2.2), new Quaternion(57, WORLD_RIGHT), new PVector(guyThickness, 3.5, 1.15), true);
+  BoundingPrism b5 = new BoundingPrism(new PVector(0, -2.95, 2.2), new Quaternion(-57, WORLD_RIGHT), new PVector(guyThickness, 3.5, 1.15), true);
+  
+  // legs
+  BoundingPrism b6 = new BoundingPrism(new PVector(0, 2.45, -1.8), new Quaternion(-53, WORLD_RIGHT), new PVector(guyThickness, 4.75, 1.4), true);
+    BoundingPrism b7 = new BoundingPrism(new PVector(0, 2.45, 1.8), new Quaternion(53, WORLD_RIGHT), new PVector(guyThickness, 4.75, 1.4), true);
+
   
   //println("A intersects: " + lineIntersectsSphere(new PVector(-5, -0.75, 0), new PVector(5, 0.-75, 0), 0, 0, 0, 1));
   onRoundStart(3);
@@ -110,6 +136,26 @@ void setup() {
   
   //println("identity: " + identity);
   //println("right up: " +  lookRotation(WORLD_RIGHT, WORLD_UP));
+  b1.setParent(player);
+  b2.setParent(player);
+  b3.setParent(player);
+  b4.setParent(player);
+  b5.setParent(player);
+  b6.setParent(player);
+  b7.setParent(player);
+
+  // initialize bullet object and hitboxes
+  RenderObject bullet = new RenderObject(zero, identity, one, loadShape("bullet.obj"), true);
+  BoundingPrism bb1 = new BoundingPrism(new PVector(0, -0.13094, 0), identity, new PVector(0.783,1.456, 0.783), false);
+  BoundingPrism bb2 = new BoundingPrism(new PVector(0, 0.75415, 0), identity, new PVector(0.635, 0.310, 0.635), false);
+  BoundingPrism bb3 = new BoundingPrism(new PVector(0, 1.0238, 0), identity, new PVector(0.429, 0.210, 0.429), false);
+  
+  bb1.setParent(bullet);
+  bb2.setParent(bullet);
+  bb3.setParent(bullet);
+
+
+
 
   //testCube.rotateBy(WORLD_FORWARD, 45);
   //mainCamera.rotateBy(WORLD_FORWARD, 45);
@@ -143,41 +189,49 @@ void draw() {
 
   //if (testView) {
   if (qHeld) {
-    camParent.rotateByLocal(WORLD_UP, 30 * deltaTime);
+    camParent.rotateByLocal(WORLD_UP, 60 * deltaTime);
     //cX += deltaTime * 50;
   }
   if (wHeld) {
-    camParent.rotateByLocal(WORLD_UP, -30 * deltaTime);
+    camParent.rotateByLocal(WORLD_UP, -60 * deltaTime);
     //cX -= deltaTime * 50;
   }
   //}
 
   if (eHeld) {
+
     //camParent.rotateByLocal(WORLD_RIGHT, 30 * deltaTime);
-    //mainCamera.movePosition(new PVector(0, 0, deltaTime * 5));
+    player.movePosition(new PVector(0, deltaTime * 5, 0));
     //cY += deltaTime * 50;
+    //testCube1.movePosition(new PVector(deltaTime * 5, 0, 0));
   }
   if (rHeld) {
+
     //camParent.rotateByLocal(WORLD_RIGHT, -30 * deltaTime);
-    //mainCamera.movePosition(new PVector(0, 0, deltaTime * -5));
+    player.movePosition(new PVector(0, deltaTime * -5, 0));
     //cY -= deltaTime * 50;
+    //testCube1.movePosition(new PVector(deltaTime * -5, 0, 0));
   }
 
   if (aHeld) {
     //camParent.rotateBy(WORLD_FORWARD, 30 * deltaTime);
     //cZ += deltaTime * 50;
+    //testCube1.rotateBy(WORLD_FORWARD, 30 * deltaTime);
   }
   if (sHeld) {
     //camParent.rotateBy(WORLD_FORWARD, -30 * deltaTime);
     //cZ -= deltaTime * 50;
+    //testCube1.rotateBy(WORLD_FORWARD, -30 * deltaTime);
   }
 
   if (dHeld) {
     //testCube.rotateBy(WORLD_UP, 30 * deltaTime);
+    //testCube1.movePosition(new PVector(0, deltaTime * 5, 0));
   }
   if (fHeld) {
     //testCube.rotateBy(WORLD_UP, -30 * deltaTime);
     onRoundStart(1);
+    //testCube1.movePosition(new PVector(0, deltaTime * -5, 0));
   }
 }
 
@@ -246,8 +300,9 @@ void updateTime() {
 
 void updateUpdateables() {
 
-  // update gated list (do queued adds / removals)
+  // update gated lists (do queued adds / removals)
   updateables.update();
+  boundingPrisms.update();
 
   // update all updateable objects
   for (Updateable u : updateables) {
@@ -286,4 +341,11 @@ private void spawnBullet() {
   }
   
   Bullet b = new Bullet(spawnPos, targetPos, one, true);
+}
+
+/**
+ Called when the player hits a bullet
+ */
+public void onBulletHitPlayer() {
+  println("BULLET HIT PLAYER!");
 }

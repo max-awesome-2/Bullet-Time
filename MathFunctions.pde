@@ -229,3 +229,51 @@ public PVector getArbitraryPerpendicular(PVector a) {
 public Quaternion lookRotationArbitrary(PVector forward) {
  return lookRotation(forward, getArbitraryPerpendicular(forward)); 
 }
+// referenced https://www.gamedev.net/forums/topic/628444-collision-detection-between-non-axis-aligned-rectangular-prisms/
+// for these two function
+///////////////////////////////////////////////////////////////
+/**
+ Scalar project of a point on a normal.
+ */
+public float scalarProjection(PVector point, PVector normal) {
+  return point.dot(normal) / normal.dot(normal);
+}
+
+/**
+ Returns a 2-dimensional PVector representing a range (of form min, max).
+ */
+public PVector projectPrism(BoundingPrism p, PVector normal) {
+
+  PVector result = new PVector(0, 0);
+
+  PVector[] vertices = p.shapes.get(0).worldVertices;
+  PVector vertex;
+  for (int i = 0; i < vertices.length; i++) {
+
+    vertex = vertices[i];
+
+    float scalar = scalarProjection(vertex, normal);
+    if (Float.isNaN(scalar)) {
+      println("NAN detected! vertex: " + vertex + ", normal: " + normal);
+    }
+
+    if (i == 0) {
+      result.x = scalar;
+      result.y = scalar;
+    } else if (scalar > result.y) {
+      result.y = scalar;
+    } else if (scalar < result.x) {
+      result.x = scalar;
+    }
+  }
+  
+  return result;
+}
+///////////////////////////////////////////////////////////////
+
+/**
+  Returns true if the two given ranges intersect, false if not.
+*/
+public boolean rangeIntersects(PVector rangeA, PVector rangeB) {
+  return (max(rangeA.x, rangeB.x) <= min(rangeA.y, rangeB.y));
+}

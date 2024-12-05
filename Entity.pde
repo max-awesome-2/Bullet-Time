@@ -148,8 +148,9 @@ public class WorldObject implements Updateable {
       // 2. world position = local position + parent world position
       // 3. world position = world position rotated by parent world rotation around parent world position
       // 4. world scale = local scale * parent world scale
+      // 5. world position = world position * parent world scale
       rotation = parent.rotation.getCopy().multiply(localRotation);
-      position = vectorAdd(localPosition, parent.position);
+      position = vectorAdd(vectorScaleByVector(localPosition, parent.scale), parent.position);
       position = rotatePointAround(position, parent.position, parent.rotation);
       scale = vectorScaleByVector(parent.scale, localScale);
     } else {
@@ -253,47 +254,10 @@ public class RenderObject extends WorldObject {
   }
 
   public void render(Camera c) {
-
-    if (wire) {
-
-      if (!testView) return;
-
-      // loop through all the shapes that make up this object and draw each one
-      for (Shape s : shapes) {
-
-        s.setCameraVertices(c);
-
-        stroke(255);
-        for (int i = 0; i <= s.template.lines.length - 2; i += 2) {
-
-          // line alpha flicker magnitude
-          float minAlphaMagOffset = 0;
-
-          // anti-seed our random with frameCount, so that even at the title screen, where we're re-seeding the random every frame to make sure the stars
-          // stay in the same spot, our letters will still flicker
-          randomSeed(frameCount * 10000 + i * 10000);
-
-          minAlphaMagOffset = LETTER_LINE_RANDOM_ALPHA_MAGNITUDE;
-
-          float randomAlpha = random(255 - minAlphaMagOffset, 255);
-          stroke(255, 255, 255, randomAlpha);
-
-
-          drawLine(s.cameraVertices[s.template.lines[i]], s.cameraVertices[s.template.lines[i + 1]]);
-        }
-
-
-        if (DRAW_DEBUG_AXES) {
-          stroke(0, 0, 255);
-          drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, forward), c));
-          stroke(0, 255, 0);
-          drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, up), c));
-          stroke(255, 0, 0);
-          drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, right), c));
-        }
-      }
-    } else {
-      pushMatrix();
+    
+    // draw stored shape with P3D renderer
+    if (pShape != null) {
+       pushMatrix();
 
       if (testView) translate(width/2, height/2);
 
@@ -339,6 +303,49 @@ public class RenderObject extends WorldObject {
       shape(pShape);
       popMatrix();
     }
+    
+    // draw shapes with wire renderer
+    if (shapes.size() > 0) {
+
+      if (!testView) return;
+
+      // loop through all the shapes that make up this object and draw each one
+      for (Shape s : shapes) {
+
+        s.setCameraVertices(c);
+
+        stroke(255);
+        for (int i = 0; i <= s.template.lines.length - 2; i += 2) {
+
+          // line alpha flicker magnitude
+          float minAlphaMagOffset = 0;
+
+          // anti-seed our random with frameCount, so that even at the title screen, where we're re-seeding the random every frame to make sure the stars
+          // stay in the same spot, our letters will still flicker
+          randomSeed(frameCount * 10000 + i * 10000);
+
+          minAlphaMagOffset = LETTER_LINE_RANDOM_ALPHA_MAGNITUDE;
+
+          float randomAlpha = random(255 - minAlphaMagOffset, 255);
+          stroke(255, 255, 255, randomAlpha);
+
+
+          drawLine(s.cameraVertices[s.template.lines[i]], s.cameraVertices[s.template.lines[i + 1]]);
+        }
+
+
+        if (DRAW_DEBUG_AXES) {
+          stroke(0, 0, 255);
+          drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, forward), c));
+          stroke(0, 255, 0);
+          drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, up), c));
+          stroke(255, 0, 0);
+          drawLine(projectPoint(position, c), projectPoint(vectorAdd(position, right), c));
+        }
+      }
+    
+    }
+    
   }
 
   protected void updateShapes() {
@@ -360,14 +367,12 @@ public class RenderObject extends WorldObject {
   }
 
   /**
-   Removes this Entity from the main Entity list, effectively despawning it.
+   Removes this object from the main updateables list, effectively despawning it.
    */
   public void despawn() {
     updateables.remove(this);
   }
 
-  public void checkCollision(RenderObject other) {
-  }
 }
 
 public class Bullet extends WorldObject {
@@ -401,5 +406,97 @@ public class Bullet extends WorldObject {
     movePosition(vectorScale(travelDirection, timeScale * deltaTime * BULLET_SPEED));
 
     // TODO: check collisions here
+  }
+}
+
+/**
+ A BoundingPrism represents a rectangular hitbox.
+ It contains a method for determining whether it is colliding with another bounding prism.
+ */
+public class BoundingPrism extends RenderObject {
+
+  // since our game only has two types of hitboxes - player and bullet hitboxes - we can just have a boolean instead of any kind of tag system
+  // we can trigger a method in the main file when a collision between the two types is detected here
+  public boolean isPlayer;
+
+  public BoundingPrism(PVector p, Quaternion rot, PVector sc, boolean isPl) {
+    super(p, rot, sc, cube, true);
+
+    boundingPrisms.add(this);
+
+    isPlayer = isPl;
+  }
+  
+   public BoundingPrism(PVector p, Quaternion rot, PVector sc, PShape shape, boolean isPl) {
+    super(p, rot, sc, cube, true);
+    pShape = shape;
+
+    boundingPrisms.add(this);
+
+    isPlayer = isPl;
+  }
+
+  @Override
+    public void update() {
+    // only check collisions with prisms of the opposite type
+    // also avoids checking self-collisions
+    for (BoundingPrism prism : boundingPrisms) {
+      if (prism.isPlayer != isPlayer) {
+        if (intersects(prism)) {
+          onBulletHitPlayer();
+        }
+      }
+    }
+
+    render(mainCamera);
+  }
+
+  @Override
+    public void despawn() {
+    super.despawn();
+    boundingPrisms.remove(this);
+  }
+
+  public boolean intersects(BoundingPrism other) {
+    // in order to determine that two shapes are not colliding, we need to find one plane that separates them
+    // for rectangular prisms, that plane is guaranteed to be one of the planes that the prism's faces is on
+
+    // referenced pseudocode at https://www.gamedev.net/forums/topic/628444-collision-detection-between-non-axis-aligned-rectangular-prisms/
+
+    // list to store all axes that we'll be testing
+    PVector[] axes = new PVector[15];
+
+    // add the 3 axis of each box
+    axes[0] = forward;
+    axes[1] = up;
+    axes[2] = right;
+    axes[3] = other.forward;
+    axes[4] = other.up;
+    axes[5] = other.right;
+
+    // add the cross products of each set of axes
+    for (int i = 0; i < 3; i ++) {
+      for (int j = 0; j < 3; j++) {
+        axes[6 + i * 3 + j] = axes[i].cross(axes[3 + j]);
+      }
+    }
+
+    // check overlap on each axis
+    for (PVector axis : axes) {
+      // skip over (0, 0, 0) axes that result from crossing the same axis
+      // we will get NaNs and things will go crazy
+      if (axis.x == 0 && axis.y == 0 && axis.z == 0) continue;
+
+      PVector prismARange = projectPrism(this, axis);
+      PVector prismBRange = projectPrism(other, axis);
+
+      if (!rangeIntersects(prismARange, prismBRange)) {
+        // we have found a plane that separates the two prisms!
+        return false;
+      }
+    }
+
+    // no plane separating the two prisms was found, meaning the prisms are colliding
+    return true;
   }
 }
