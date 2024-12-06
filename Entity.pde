@@ -1,27 +1,4 @@
 
-// later, replace this wherever this is used w/ a cam-transformed size for hitspheres
-float BULLET_ONE_RADIUS = 20;
-
-// these variables are used to make drawn bullets and lines flicker slightly - it adds a lot to the 1980s vector aesthetic
-float BULLET_RANDOM_BRIGHTNESS_MAGNITUDE = 50;
-
-// enemies flicker more severely the more damaged they are
-float MIN_LINE_RANDOM_ALPHA_MAGNITUDE = 80;
-
-// flicker magnitude for lines
-float LETTER_LINE_RANDOM_ALPHA_MAGNITUDE = 100;
-
-// variables for face flashing - enemy's shape faces flash red for a moment upon taking damage
-// the time for which the face will flash upon taking damage
-float DAMAGE_FLASH_TIME = 0.2;
-// the maximum opacity of a face when damage flashing
-float MIN_DAMAGE_FLASH_FULL_OPACITY = 100, MAX_DAMAGE_FLASH_FULL_OPACITY = 235;
-
-// defines the 'boundaries' of the game world - if an entity passes over this threshold on any side of the XY plane, it despawns
-float DESPAWN_BOUNDARY = 16;
-
-// consistent opacity used to draw UI elements
-float UI_OPACITY = 100;
 
 
 /**
@@ -98,7 +75,7 @@ public class WorldObject implements Updateable {
   }
 
   /**
-   Sets this Entity's rotation based on a set of Euler angles.
+   Sets this object's rotation based on a set of Euler angles.
    */
   public void setRotationEulers(PVector eulers) {
     localRotation = new Quaternion(eulers.x, WORLD_RIGHT).multiply(new Quaternion(eulers.y, WORLD_UP).multiply(new Quaternion(eulers.z, WORLD_FORWARD)));
@@ -107,9 +84,9 @@ public class WorldObject implements Updateable {
   }
 
   /**
-   Sets this Entity's rotation based on an axis and a number of degrees to rotate around that axis
+   Sets this object's rotation based on an axis and a number of degrees to rotate around that axis
    */
-  public void setRotationDegsAxis(float degrees, PVector axis, boolean modelOnly) {
+  public void setRotationDegsAxis(float degrees, PVector axis) {
 
     rotation = new Quaternion(degrees, axis);
 
@@ -131,7 +108,7 @@ public class WorldObject implements Updateable {
   }
 
   /**
-   Rotates this Entity given an axis and a number of degrees to rotate around that axis.
+   Rotates this object given an axis and a number of degrees to rotate around that axis.
    */
   public void rotateBy(PVector axis, float degs) {
 
@@ -215,20 +192,11 @@ public class Camera extends WorldObject {
 
 public class RenderObject extends WorldObject {
 
-  // defines what type of Entity this is
-  // 0 = player, 1 = shot, 2 = enemy, 3 = camera, 4 = letter, 5 = explosion graphic, 6 = player shot, 7 = UI elements (such as the life counter), 8 = enemy spawner
-  // 9 = pickup vector
-  public int entityType = 0;
-
-
   // list of shapes defined by vertices
   protected ArrayList<Shape> shapes = new ArrayList<Shape>();
 
   // shape template - kept only because it's necessary to make a copy of this entity
   public ShapeTemplate shapeTemplate;
-
-  // for enemies, shots, and the player, their hitbox is spherical, and its radius is defined here
-  public float hitSphereRadius = 0.5;
 
   public PShape pShape;
 
@@ -300,7 +268,7 @@ public class RenderObject extends WorldObject {
 
 
       // perform final translation
-      translate(finalTranslation.x * wire_to_real_units, finalTranslation.y * wire_to_real_units, (-finalTranslation.z) * wire_to_real_units);
+      translate(finalTranslation.x * P3D_ONE_UNIT_SCALE, finalTranslation.y * P3D_ONE_UNIT_SCALE, (-finalTranslation.z) * P3D_ONE_UNIT_SCALE);
 
       Quaternion qAltered = new Quaternion(-rotation.w, rotation.x, rotation.y, -rotation.z);
       // apply object rotation
@@ -330,17 +298,7 @@ public class RenderObject extends WorldObject {
         stroke(255);
         for (int i = 0; i <= s.template.lines.length - 2; i += 2) {
 
-          // line alpha flicker magnitude
-          float minAlphaMagOffset = 0;
-
-          // anti-seed our random with frameCount, so that even at the title screen, where we're re-seeding the random every frame to make sure the stars
-          // stay in the same spot, our letters will still flicker
-          randomSeed(frameCount * 10000 + i * 10000);
-
-          minAlphaMagOffset = LETTER_LINE_RANDOM_ALPHA_MAGNITUDE;
-
-          float randomAlpha = random(255 - minAlphaMagOffset, 255);
-          stroke(255, 255, 255, randomAlpha);
+          stroke(255, 255, 255, 255);
 
 
           drawLine(s.cameraVertices[s.template.lines[i]], s.cameraVertices[s.template.lines[i + 1]]);

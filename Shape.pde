@@ -21,6 +21,9 @@ public class Shape {
     }
   }
 
+  /**
+   Determines the world position of each local vertex in this shape's template.
+   */
   public void setWorldVertices(PVector worldPos, Quaternion rotation, PVector scale) {
 
     for (int i = 0; i < template.vertices.length; i++) {

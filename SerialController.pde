@@ -40,9 +40,9 @@ class SerialController {
 
     if (portFound) {
       try {
-        
+
         port = new Serial(mainApplet, portName, 115200);
-                
+
         lastMessageTime = millis();
 
         initPort();
@@ -54,7 +54,7 @@ class SerialController {
     } else {
       println("WARNING: port " + portName + " (designated for " + controllerName + ") not found.");
     }
-    
+
     if (port != null)
       println(controllerName + ": port " + portName + " initialized successfully!");
   }
@@ -71,16 +71,15 @@ class SerialController {
     if (port == null) return;
 
     if (millis() - lastMessageTime > 1000) {
-      // resend single character to trigger DMP init/start
-      // in case the MPU is halted/reset while applet is running
-      //port.write('r');
+
+      // flush the first message
       port.readStringUntil(10);
       lastMessageTime = millis();
     }
 
     // if port is available, read all messages from it
     while (port.available() > 0) {
-      
+
       lastMessageTime = millis();
 
       // read until a newline

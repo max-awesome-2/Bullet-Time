@@ -14,7 +14,7 @@ public void setupController() {
   // later, add automatic polling of each COM port in order to auto-detect controllers
 
   controllers = new GatedArrayList<SerialController>();
-  
+
   SerialController bill = new SerialController("Bill Bullet", "COM7");
 }
 

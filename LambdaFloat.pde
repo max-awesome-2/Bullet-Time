@@ -1,3 +1,3 @@
 interface LambdaFloat {
- void run(float val); 
+  void run(float val);
 }

@@ -18,7 +18,7 @@ class Tween implements Updateable {
 
   LambdaEmpty onComplete = null;
   LambdaFloat onUpdate = null;
-  
+
   EaseStyle easeMode;
 
   /**
@@ -33,21 +33,21 @@ class Tween implements Updateable {
     // add to list of updatables
     updateables.add(this);
   }
-  
+
   /**
-    Basic tween constructor - parameters for from value, to value, time
-  */
+   Basic tween constructor - parameters for from value, to value, time
+   */
   public Tween(float fromVal, float toVal, float t) {
-   totalLength = t;
-   from = fromVal;
-   to = toVal;
-   
-   reset();
-   
-   // add to list of updatables
+    totalLength = t;
+    from = fromVal;
+    to = toVal;
+
+    reset();
+
+    // add to list of updatables
     updateables.add(this);
   }
-  
+
   /**
    Stores a no-parameter lambda function to be called when the timer completes.
    Returns the tween itself for easy function chaining.
@@ -84,7 +84,7 @@ class Tween implements Updateable {
   }
 
   /**
-   Called every frame. 
+   Called every frame.
    If this tween has an assigned onUpdate function, call it with the progress value mapped between assigned from & to values.
    If this tween is complete, calls the assigned onComplete function if it exists, and then removes this object from the main updateables list.
    */
@@ -93,10 +93,10 @@ class Tween implements Updateable {
     // constrain to 1 so that the update function is called with the full, final value just before completion
     // (so that it doesn't call a final time at like 0.9998571 or something)
     float progress = 1 - constrain((triggerTime - time) / totalLength, 0, 1);
-    
+
     // apply easing function
     if (easeMode == EaseStyle.EaseOutElastic) {
-     progress = easeOutElastic(progress); 
+      progress = easeOutElastic(progress);
     }
 
     // if we have an onUpdate function, map progress value using given from / to values and call the onUpdate function with it
@@ -104,27 +104,26 @@ class Tween implements Updateable {
       float mappedValue = map(progress, 0, 1, from, to);
       onUpdate.run(mappedValue);
     }
-    
+
     // on timer complete
     if (time >= triggerTime) {
-      
-       // if we have an onComplete lambda, call it
-       if (onComplete != null) onComplete.run();
-       
-       updateables.remove(this);
+
+      // if we have an onComplete lambda, call it
+      if (onComplete != null) onComplete.run();
+
+      updateables.remove(this);
     }
   }
-  
+
   public Tween setEaseMode(EaseStyle e) {
-    
+
     easeMode = e;
-    
+
     return this;
   }
 }
 
 enum EaseStyle {
- 
+
   None, EaseOutElastic
-  
 }

@@ -116,7 +116,7 @@ public PVector moveTowardsVector(PVector a, PVector b, float by) {
  https://math.stackexchange.com/questions/3140136/how-to-create-a-quaternion-rotation-from-a-forward-and-up-vector
  and
  https://stackoverflow.com/questions/52413464/look-at-quaternion-using-up-vector
- and 
+ and
  https://discussions.unity.com/t/what-is-the-source-code-of-quaternion-lookrotation/72474/3
  */
 public Quaternion lookRotation(PVector forward, PVector up) {
@@ -168,7 +168,7 @@ public Quaternion lookRotation(PVector forward, PVector up) {
     quaternion.w = (m20 - m02) * num3;
     return quaternion;
   }
-  
+
   float num5 = sqrt(((1f + m22) - m00) - m11);
   float num2 = 0.5f / num5;
   quaternion.x = (m20 + m02) * num2;
@@ -197,7 +197,7 @@ public boolean lineIntersectsSphere(PVector lineStart, PVector lineEnd, float cx
   float A = vx * vx + vy * vy + vz * vz;
   float B = 2.0 * (px * vx + py * vy + pz * vz - vx * cx - vy * cy - vz * cz);
   float C = px * px - 2 * px * cx + cx * cx + py * py - 2 * py * cy + cy * cy +
-    pz * pz - 2 * pz * cz + cz * cz - BULLET_TARGET_MIN_DISTANCE * BULLET_TARGET_MIN_DISTANCE;
+    pz * pz - 2 * pz * cz + cz * cz - radius * radius;
 
   // discriminant
   float D = B * B - 4 * A * C;
@@ -207,27 +207,25 @@ public boolean lineIntersectsSphere(PVector lineStart, PVector lineEnd, float cx
 }
 
 /**
-  Returns an arbitrary vector perpendicular for the given vector.
-  Referenced https://stackoverflow.com/questions/41275311/a-good-way-to-find-a-vector-perpendicular-to-another-vector
-*/
+ Returns an arbitrary vector perpendicular for the given vector.
+ Referenced https://stackoverflow.com/questions/41275311/a-good-way-to-find-a-vector-perpendicular-to-another-vector
+ */
 public PVector getArbitraryPerpendicular(PVector a) {
- 
+
   PVector b;
-  
+
   // make b a vector that is guaranteed to not be colinear
   if (a.x != 0 && a.y == 0 && a.z == 0) {
     b = new PVector(0, 1, 0);
-    
   } else {
-   b = new PVector(1, 0, 0); 
+    b = new PVector(1, 0, 0);
   }
-  
+
   return b.cross(a);
-  
 }
 
 public Quaternion lookRotationArbitrary(PVector forward) {
- return lookRotation(forward, getArbitraryPerpendicular(forward)); 
+  return lookRotation(forward, getArbitraryPerpendicular(forward));
 }
 // referenced https://www.gamedev.net/forums/topic/628444-collision-detection-between-non-axis-aligned-rectangular-prisms/
 // for these two function
@@ -253,9 +251,6 @@ public PVector projectPrism(BoundingPrism p, PVector normal) {
     vertex = vertices[i];
 
     float scalar = scalarProjection(vertex, normal);
-    if (Float.isNaN(scalar)) {
-      println("NAN detected! vertex: " + vertex + ", normal: " + normal);
-    }
 
     if (i == 0) {
       result.x = scalar;
@@ -266,14 +261,14 @@ public PVector projectPrism(BoundingPrism p, PVector normal) {
       result.x = scalar;
     }
   }
-  
+
   return result;
 }
 ///////////////////////////////////////////////////////////////
 
 /**
-  Returns true if the two given ranges intersect, false if not.
-*/
+ Returns true if the two given ranges intersect, false if not.
+ */
 public boolean rangeIntersects(PVector rangeA, PVector rangeB) {
   return (max(rangeA.x, rangeB.x) <= min(rangeA.y, rangeB.y));
 }

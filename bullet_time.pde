@@ -151,9 +151,7 @@ float P3D_ONE_UNIT_SCALE = 50;
 WorldObject player;
 RenderObject playerModelObject;
 
-// testing:
-boolean qHeld, wHeld, eHeld, rHeld, aHeld, sHeld, dHeld, fHeld;
-
+// debug variable - set false to test without the controller
 boolean doController = true;
 
 void setup() {
@@ -195,7 +193,7 @@ void setup() {
   playerModelGameOver.scale(P3D_ONE_UNIT_SCALE * 0.5);
   //playerModel.scale(0.5);
   //playerModelGameOver.scale(0.5);
-  
+
   bulletModel = loadShape("bullet.obj");
   bulletModel.scale(P3D_ONE_UNIT_SCALE * BULLET_SCALE);
   bulletDodged= loadShape("dodged_bullet.obj");
@@ -227,10 +225,6 @@ void setup() {
   BoundingPrism b6 = new BoundingPrism(new PVector(0, 2.45, -1.8), new Quaternion(-53, WORLD_RIGHT), new PVector(guyThickness, 4.75, 1.4), true);
   BoundingPrism b7 = new BoundingPrism(new PVector(0, 2.45, 1.8), new Quaternion(53, WORLD_RIGHT), new PVector(guyThickness, 4.75, 1.4), true);
 
-
-  // test cube roughly showing bullet min distance radius
-  RenderObject c = new RenderObject(new PVector(0, 0, 0), identity, vectorScale(one, BULLET_TARGET_MIN_DISTANCE * 2), cube, true);
-
   b1.setParent(playerModelObject);
   b2.setParent(playerModelObject);
   b3.setParent(playerModelObject);
@@ -240,8 +234,6 @@ void setup() {
   b7.setParent(playerModelObject);
 }
 
-float scale_units = 50;
-float wire_to_real_units = 50;
 
 void draw() {
 
@@ -261,13 +253,7 @@ void draw() {
   // poll controller
   if (doController) checkControllerInput();
 
-
-  // init P3D camera
-  //camera(mainCamera.position.x, mainCamera.position.y, -mainCamera.position.z, width/2, height/2, 0, 0, 1, 0);
-
-  //  println("cam eye positioN: " + new PVector(cX, cY, cZ));
-  //camera(cX, cY, cZ, width/2, height/2, 0, 0, 1, 0);
-  if (!testView) camera(mainCamera.position.x * wire_to_real_units, mainCamera.position.y * wire_to_real_units, mainCamera.position.z * wire_to_real_units, 0, 0, 0, 0, 1, 0);
+  if (!testView) camera(mainCamera.position.x * P3D_ONE_UNIT_SCALE, mainCamera.position.y * P3D_ONE_UNIT_SCALE, mainCamera.position.z * P3D_ONE_UNIT_SCALE, 0, 0, 0, 0, 1, 0);
 
 
   updateUpdateables();
@@ -404,6 +390,7 @@ private void onRoundStart(int roundNum) {
   Tween t = new Tween(0, 1, maxStaggerTime).setOnUpdate((float val) -> {
     spawnTimes.update();
 
+    // check timers - if a timer is up, spawn the bullet and remove the timer
     for (float f : spawnTimes) {
       if (time > f) {
         boolean display = bulletsSpawned >= disposeBullets;
@@ -455,11 +442,12 @@ public void onBulletHitPlayer() {
   startButtonPressed = false;
 
   playerModelObject.pShape = playerModelGameOver;
-  
+
   // tween camera back to starting position
   Tween t = new Tween(mainCamera.localPosition.z, -camMaxDistance, 1.5).setOnUpdate((float val) -> {
-     mainCamera.setPosition(new PVector(0, 0, val));
-  }).setEaseMode(EaseStyle.EaseOutElastic);
+    mainCamera.setPosition(new PVector(0, 0, val));
+  }
+  ).setEaseMode(EaseStyle.EaseOutElastic);
 }
 
 /**
@@ -482,7 +470,6 @@ private void backToTitle() {
   gameState = 0;
   startButtonPressed = false;
 
-  // TODO: reset camera position and rotation
 }
 
 /**

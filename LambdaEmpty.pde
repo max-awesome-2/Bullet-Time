@@ -1,3 +1,3 @@
 interface LambdaEmpty {
- void run(); 
+  void run();
 }

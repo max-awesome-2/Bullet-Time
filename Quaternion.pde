@@ -143,11 +143,11 @@ public class Quaternion {
   public String toString() {
     return "Quaternion(" + w + ", " + x + ", " + y + ", " + z + ")";
   }
-  
+
   /**
-    Takes a length 16 float array as input; converts this Quaternion into a rotation matrix and stores it in the given array.
-    This matrix can then be used with applyMatrix() to rotate the P3D camera.
-  */
+   Takes a length 16 float array as input; converts this Quaternion into a rotation matrix and stores it in the given array.
+   This matrix can then be used with applyMatrix() to rotate the P3D camera.
+   */
   public void toMatrix(float[] matrix) {
     matrix[3] = 0.0f;
     matrix[7] = 0.0f;
@@ -160,19 +160,19 @@ public class Quaternion {
     matrix[0] = (float) (1.0f - (2.0f * ((y * y) + (z * z))));
     matrix[1] = (float) (2.0f * ((x * y) - (z * w)));
     matrix[2] = (float) (2.0f * ((x * z) + (y * w)));
-    
+
     matrix[4] = (float) (2.0f * ((x * y) + (z * w)));
     matrix[5] = (float) (1.0f - (2.0f * ((x * x) + (z * z))));
     matrix[6] = (float) (2.0f * ((y * z) - (x * w)));
-    
+
     matrix[8] = (float) (2.0f * ((x * z) - (y * w)));
     matrix[9] = (float) (2.0f * ((y * z) + (x * w)));
     matrix[10] = (float) (1.0f - (2.0f * ((x * x) + (y * y))));
   }
-  
+
   /**
-    Returns a quaternion q such that this * q = b.
-  */
+   Returns a quaternion q such that this * q = b.
+   */
   public Quaternion getMultiplicativeInverse(Quaternion b) {
     return b.getCopy().multiply(getConjugate());
   }
