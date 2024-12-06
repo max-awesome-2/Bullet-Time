@@ -15,7 +15,7 @@ public void setupController() {
 
   controllers = new GatedArrayList<SerialController>();
   
-  SerialController bill = new SerialController("Bill Bullet", "COM3");
+  SerialController bill = new SerialController("Bill Bullet", "COM7");
 }
 
 public void checkControllerInput() {
@@ -45,7 +45,6 @@ public void serialMessageReceived(String msg) {
       Quaternion reading = new Quaternion(comp1, comp3, -comp2, comp4);
 
       if (!gotFirstReading) {
-        println("GOT FIRST READING");
         gotFirstReading = true;
 
         // assumes that the player is holding Bill upright and forward at the time of the first reading

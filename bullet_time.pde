@@ -92,7 +92,7 @@ int bulletsDodged = 0;
 
 ///////////////// camera control variables
 
-//
+// minimum and maximum distance of the camera
 float camMaxDistance = 30;
 float camMinDistance = 10;
 
@@ -154,7 +154,7 @@ RenderObject playerModelObject;
 // testing:
 boolean qHeld, wHeld, eHeld, rHeld, aHeld, sHeld, dHeld, fHeld;
 
-boolean doController = false;
+boolean doController = true;
 
 void setup() {
   size(860, 860, P3D);
